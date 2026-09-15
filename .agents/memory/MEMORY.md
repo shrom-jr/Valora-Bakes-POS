@@ -1,1 +1,2 @@
 - [Bakery POS flame standard](bakery-pos-flame-standard.md) — Keep the UI high-chroma and incandescent; avoid muted amber, brown, blue-slate, and flat amber borders.
+- [Firebase staff trust boundary](firebase-staff-trust-boundary.md) — Phase 2 treats every authenticated Firebase account as trusted bakery staff; add roles before broader access.

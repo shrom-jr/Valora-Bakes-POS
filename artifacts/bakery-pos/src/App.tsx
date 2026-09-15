@@ -8,6 +8,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import Boot from '@/pages/boot';
 import SignIn from '@/pages/sign-in';
 import Dashboard from '@/pages/dashboard';
+import Menu from '@/pages/menu';
 
 import {
   Route,
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/" component={Boot} />
           <Route path="/sign-in" component={SignIn} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/menu" component={Menu} />
           <Route component={NotFound} />
         </Switch>
       </RoutedErrorBoundary>

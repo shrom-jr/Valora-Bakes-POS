@@ -1,5 +1,6 @@
 import { initializeApp, getApp, getApps, FirebaseOptions } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getDatabase } from 'firebase/database';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -8,6 +9,7 @@ const firebaseConfig: FirebaseOptions = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
 };
 
 // Check if we have the minimum required configuration
@@ -23,6 +25,7 @@ const app = isFirebaseConfigured
   : null;
 
 export const auth = app ? getAuth(app) : null;
+export const database = app ? getDatabase(app) : null;
 
 // Ensure local persistence is set if auth is initialized
 if (auth) {

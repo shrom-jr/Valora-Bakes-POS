@@ -1,0 +1,69 @@
+Phase 2 Architectural Specification: Category-First Menu Management, Shelf Inventory, and Adaptive POS Register Grid
+
+System Role & Objective:
+Act as a Principal Systems Architect and Lead Frontend Engineer with 20 years of experience in high-throughput retail point-of-sale systems. Build Phase 2: Category-First Menu Management, Shelf Inventory Synchronization, and the Adaptive POS Touch-Tile Grid for the Bakery POS application.
+
+The visual design must strictly maintain the established authentic Firebase "Sunset Ember & Obsidian" aesthetic: deep obsidian surfaces (#0E0F12, #14161B), glowing gold-to-orange rim borders, incandescent flame gradient actions, and crystal-clear high-contrast typography. Zero hardcoded mock items or dummy data are permitted; initialize as a completely clean, dynamic cloud-backed slate.
+
+---
+
+1. Flat Realtime Database Cloud Architecture:
+To guarantee minimal bandwidth consumption and zero data clashes, structure all Firebase Realtime Database paths as completely flat, independent collections keyed by unique identifiers:
+- Categories Path: Stores category records containing Category Name, Sort Order, and Active Status.
+- Menu Items Path: Stores product records containing Item Name, Category ID reference, Pricing Mode (Fixed Piece vs. Weight/Pound), Unit Price (for piece items) or Sizing Tiers (for pound items, mapping each weight label like 0.5 lb, 1 lb, 2 lb to its price), and Active Status.
+- Shelf Inventory Path: Stores live stock counts keyed by item identifier or variant identifier, tracking Available Shelf Quantity and Low Stock Alert Level.
+- Keep paths strictly separated so loading the POS register listens only to active items and stock counts without reading unnecessary administrative metadata.
+
+---
+
+2. Management Workspace: Menu & Shelf Inventory:
+Create a dedicated, password-protected administrative view accessible via a clean "Menu & Prices" link inside the Dashboard:
+- Category Manager:
+  - Clean "+ Add Category" button opening a high-contrast modal to enter Category Name (e.g., Pastries, Cakes, Croissants, Muffins, Savories).
+  - List of active categories with instant drag/reorder capability, rename action, and safe delete action (with validation preventing deletion if items are assigned).
+- Item Creator & Editor:
+  - Form fields: Item Name, Category selector dropdown, and a two-way Pricing Mode toggle: "Sold by Piece" or "Sold by Weight / Pound".
+  - If "Sold by Piece": A single clean price input (NPR) and an initial shelf stock quantity input.
+  - If "Sold by Weight / Pound": A dynamic list builder allowing the user to add pound tiers (e.g., 0.5 lb, 1 lb, 2 lb, custom lb), setting the exact NPR price and starting shelf stock for each tier.
+  - An on/off toggle: "Track Shelf Stock" (enabled by default; if turned off, the item can sell infinitely without stock tracking).
+- Morning Shelf Loading / Quick Stock Manager:
+  - A visual stock-loading screen grouped cleanly by category.
+  - Next to each product (and each cake weight tier), provide high-visibility numeric increment controls (+1, +5, +10, or custom number entry) labeled "Add Fresh Bake".
+  - Updating stock updates the cloud instantly with an immediate visual pulse.
+
+---
+
+3. Cashier POS Register Grid (Main Workspace):
+Replace the empty Phase 1 register placeholder with a high-performance touch grid:
+- Category Filter Ribbon:
+  - A horizontal, swipeable ribbon pinned to the top of the register containing an "[All Items]" pill followed by dynamic category pills (e.g., [Cakes], [Pastries], [Croissants]).
+  - Active category pill highlights in a vibrant flame gradient with white text; inactive pills sit in deep charcoal with crisp silver text.
+- Adaptive Multi-Device Grid:
+  - Mobile (Handheld View): 2-column touch-tile layout with large touch targets (minimum 72px height) optimized for single-thumb checkout.
+  - Laptop / Desktop View: Expands gracefully into a 4 to 6-column grid utilizing available horizontal space beside the persistent right-side order panel.
+- Product Touch-Tile Anatomy:
+  - Card Surface: Deep obsidian background with subtle top-rim lighting and a gentle 1px border.
+  - Item Title: High-contrast pure white, bold, legible typography.
+  - Price Display: Monospaced, bold NPR pricing (e.g., "NPR 120" or "From NPR 450" for cakes with multiple weights).
+  - Stock Pill: A high-visibility badge showing units remaining (e.g., "14 left" in glowing emerald; "2 left" in warning amber).
+  - Sold-Out State: If stock hits 0, automatically dim the tile, disable tapping, and display a prominent, high-contrast "Sold Out" badge across the center.
+  - Active Cart Indicator: When an item is present in the current order, show an illuminated incandescent flame badge in the top-right corner of the tile displaying the current quantity added.
+- Cake Weight / Size Selector:
+  - When tapping an item marked as "Sold by Weight / Pound", smoothly slide up a clean bottom sheet (on mobile) or open a centered modal (on desktop).
+  - Display available pound tiers in large, high-contrast buttons (e.g., "[ 0.5 lb — NPR 450 (4 left) ]", "[ 1.0 lb — NPR 850 (2 left) ]").
+  - Tapping a size immediately adds that specific variant to the active order and closes the selector.
+
+---
+
+4. Cart State Synchronization (Phase 2 Baseline):
+- Maintain an active order state in local client memory.
+- Tapping a piece item or selecting a cake size immediately appends it to the active order, recalculates the Subtotal, Tax (if enabled), and Grand Total in monospaced NPR format, and enables the radiant "Charge" button.
+- Provide a clean "+ / -" stepper on active items to increment or decrement quantities, automatically capping additions at the available shelf stock limit.
+- Provide a 1-tap item removal control to clear a mistakenly added item from the bill.
+
+---
+
+5. Motion Physics, Tactile Feedback & Visual Polish:
+- Tile Tap Interaction: Spring-physics scale-down (scale-[0.97]) on touch down, instantly rebounding with an ambient orange rim glow.
+- Real-Time Cloud Listeners: Any menu or stock changes made on one device must instantly reflect on the register grid of all connected devices via Firebase Realtime Database listeners without page refreshes.
+- Empty Catalog State: If no categories or items exist in the database yet, display a refined empty-state illustration featuring a bakery storefront icon, crisp off-white guidance text, and a glowing action button: "+ Add First Menu Item".

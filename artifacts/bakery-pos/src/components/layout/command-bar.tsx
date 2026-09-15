@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Cloud, CloudOff, Store, ChevronRight } from 'lucide-react';
+import { LogOut, Cloud, CloudOff, Store, ChevronRight, Menu as MenuIcon, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 
 export default function CommandBar() {
   const { signOut, user } = useAuth();
@@ -34,9 +34,17 @@ export default function CommandBar() {
         <div className="flex items-center gap-2 text-sm">
           <span className="font-bold text-white tracking-wide">Bakery POS</span>
           <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-          <span className={location === '/dashboard' ? 'text-white' : 'text-[#94A3B8]'}>
-            Register
-          </span>
+          
+          <div className="flex items-center gap-1 bg-[#0E0F12] p-1 rounded-lg border border-[#FF6D00]/20">
+            <Link href="/dashboard" className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${location === '/dashboard' ? 'bg-[#14161B] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]' : 'text-[#94A3B8] hover:text-[#E2E8F0]'}`}>
+              <ShoppingCart className={`w-3.5 h-3.5 ${location === '/dashboard' ? 'stroke-[url(#flame-grad)]' : ''}`} />
+              Register
+            </Link>
+            <Link href="/menu" className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${location === '/menu' ? 'bg-[#14161B] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]' : 'text-[#94A3B8] hover:text-[#E2E8F0]'}`}>
+              <MenuIcon className={`w-3.5 h-3.5 ${location === '/menu' ? 'stroke-[url(#flame-grad)]' : ''}`} />
+              Menu & Prices
+            </Link>
+          </div>
         </div>
       </div>
 

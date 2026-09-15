@@ -1,0 +1,57 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "categories": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$categoryId": {
+        ".validate": "newData.hasChildren(['name', 'sortOrder', 'active', 'createdAt', 'updatedAt'])",
+        "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "sortOrder": { ".validate": "newData.isNumber()" },
+        "active": { ".validate": "newData.isBoolean()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "menuItems": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$itemId": {
+        ".validate": "newData.hasChildren(['name', 'categoryId', 'pricingMode', 'trackStock', 'active', 'createdAt', 'updatedAt'])",
+        "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "categoryId": { ".validate": "newData.isString() && root.child('categories').child(newData.val()).exists()" },
+        "pricingMode": { ".validate": "newData.val() === 'piece' || newData.val() === 'weight'" },
+        "unitPrice": { ".validate": "newData.val() == null || (newData.isNumber() && newData.val() >= 0)" },
+        "tiers": {
+          "$tierId": {
+            ".validate": "newData.hasChildren(['label', 'price'])",
+            "label": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "weightLb": { ".validate": "newData.val() == null || (newData.isNumber() && newData.val() >= 0)" },
+            "price": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "$other": { ".validate": false }
+          }
+        },
+        "trackStock": { ".validate": "newData.isBoolean()" },
+        "active": { ".validate": "newData.isBoolean()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "shelfInventory": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$inventoryId": {
+        ".validate": "newData.hasChildren(['itemId', 'availableQuantity', 'lowStockLevel', 'updatedAt'])",
+        "itemId": { ".validate": "newData.isString()" },
+        "tierId": { ".validate": "newData.val() == null || newData.isString()" },
+        "availableQuantity": { ".validate": "newData.isNumber() && newData.val() >= 0 && (newData.val() % 1 === 0.0)" },
+        "lowStockLevel": { ".validate": "newData.isNumber() && newData.val() >= 0 && (newData.val() % 1 === 0.0)" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
