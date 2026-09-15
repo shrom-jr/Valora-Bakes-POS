@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "UzWBeWG9S4mUwigM916O-"
+uri = "file://bakery-pos-source.zip"
+type = "unspecified"
+title = "Bakery POS source code"
+description = "Lightweight source-only ZIP archive: 0.29 MB, 248 files, with dependencies, caches, build outputs, Git metadata, logs, and other ZIP files excluded."
+logical_id = "af037d93-331a-4249-b3c3-e4b2a8a0fd3d"
+content_hash = "sha256:1d8c3b2fe7f01788ef5497952f2e3f97aa00b48fc2be80697e0ad55d94d4426b"
+size = 302184
+mtime_ms = 1789508002454
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:bb5e742d-0367-4974-a4c9-e0c84dba1fa9/af037d93-331a-4249-b3c3-e4b2a8a0fd3d/5a937313-d929-4161-96dd-708a3385b0b3"
+storage_version_token = "1789508011774860"
+content_type = "application/octet-stream"
