@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Bakery POS"
+description = "A premium mobile-first point-of-sale foundation for bakery teams, with an installable PWA shell, Firebase email/password authentication, guarded routes, session persistence, connectivity status, and a responsive counter workspace ready for live register data."
+version = "1.0.0"
+id = "artifacts/bakery-pos"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24728
+
+[services.development]
+run = "pnpm --filter @workspace/bakery-pos run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bakery-pos", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/bakery-pos/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24728"
+BASE_PATH = "/"
