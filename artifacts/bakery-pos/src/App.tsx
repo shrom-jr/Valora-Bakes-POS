@@ -18,6 +18,20 @@ import {
 
 const queryClient = new QueryClient();
 
+function FlameGradient() {
+  return (
+    <svg width="0" height="0" className="absolute pointer-events-none" aria-hidden="true">
+      <defs>
+        <linearGradient id="flame-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFD54F" />
+          <stop offset="50%" stopColor="#FF8A00" />
+          <stop offset="100%" stopColor="#F4511E" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 function Router() {
   return (
     <AuthProvider>
@@ -42,6 +56,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <FlameGradient />
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Router />
         </WouterRouter>

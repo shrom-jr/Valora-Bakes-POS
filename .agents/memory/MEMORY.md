@@ -1,0 +1,1 @@
+- [Bakery POS flame standard](bakery-pos-flame-standard.md) — Keep the UI high-chroma and incandescent; avoid muted amber, brown, blue-slate, and flat amber borders.

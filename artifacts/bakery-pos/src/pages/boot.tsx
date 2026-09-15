@@ -22,19 +22,21 @@ export default function Boot() {
   }, [user, loading, isConfigured, setLocation]);
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-[#111215] text-white relative overflow-hidden">
+    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-[#0E0F12] text-white relative overflow-hidden">
       {/* Ambient background glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#FF8A00]/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#FF6D00]/10 rounded-full blur-[100px] pointer-events-none" />
       
       <div className="z-10 flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-700 ease-out">
-        <div className="w-16 h-16 rounded-2xl bg-[#1C1E24] border border-[#FF8A00]/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_32px_rgba(0,0,0,0.5)] flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#FF8A00]/10 to-transparent opacity-50" />
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FFB300] via-[#FF8A00] to-[#FF5400] relative animate-pulse shadow-[0_0_15px_rgba(255,138,0,0.6)]" />
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-[#FFD54F] via-[#FF6D00] to-transparent shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15),0_0_0_1px_rgba(255,140,0,0.25)]">
+          <div className="w-16 h-16 rounded-2xl bg-[#14161B] flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#FF6D00]/10 to-transparent opacity-50" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] relative animate-pulse shadow-[0_0_20px_rgba(255,109,0,0.4)]" />
+          </div>
         </div>
         <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-xl font-semibold tracking-tight text-white">Bakery POS</h1>
-          <div className="flex items-center gap-2 text-[#CBD5E1] text-sm font-mono">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <h1 className="text-xl font-bold tracking-tight text-white">Bakery POS</h1>
+          <div className="flex items-center gap-2 text-[#E2E8F0] text-sm font-mono">
+            <Loader2 className="w-3.5 h-3.5 animate-spin stroke-[url(#flame-grad)]" />
             <span>Initializing system...</span>
           </div>
         </div>

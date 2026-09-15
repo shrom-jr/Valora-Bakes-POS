@@ -70,139 +70,141 @@ export default function SignIn() {
 
   if (!isConfigured) {
     return (
-      <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-[#111215] relative overflow-hidden">
+      <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-[#0E0F12] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-destructive/10 rounded-full blur-[100px] pointer-events-none" />
         
-        <Card className="w-full max-w-md border-[#FF8A00]/20 bg-[#1C1E24]/80 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-500 rounded-2xl">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-destructive/50 to-destructive" />
-          <CardHeader>
-            <div className="w-12 h-12 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-4 text-destructive">
-              <ServerCrash className="w-6 h-6" />
-            </div>
-            <CardTitle className="text-xl text-white">Configuration Required</CardTitle>
-            <CardDescription className="text-[#CBD5E1] leading-relaxed">
-              Bakery POS cannot start because Firebase is not configured.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive" className="bg-destructive/5 border-destructive/20 text-destructive-foreground">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Missing Environment Variables</AlertTitle>
-              <AlertDescription className="mt-2 text-sm opacity-90 leading-relaxed font-mono">
-                Please set the following in your environment:
-                <ul className="list-disc pl-4 mt-2 space-y-1 opacity-70">
-                  <li>VITE_FIREBASE_API_KEY</li>
-                  <li>VITE_FIREBASE_AUTH_DOMAIN</li>
-                  <li>VITE_FIREBASE_PROJECT_ID</li>
-                  <li>...and other standard Firebase keys.</li>
-                </ul>
-              </AlertDescription>
-            </Alert>
-            <Button disabled className="w-full bg-[#21232B] text-[#94A3B8] border-transparent rounded-xl h-11">
-              System Offline
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-destructive via-destructive/50 to-transparent shadow-[0_4px_20px_-2px_rgba(239,68,68,0.15),0_0_0_1px_rgba(239,68,68,0.25)] w-full max-w-md animate-in slide-in-from-bottom-4 fade-in duration-500 z-10">
+          <Card className="w-full h-full border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-destructive/50 to-destructive" />
+            <CardHeader>
+              <div className="w-12 h-12 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-4 text-destructive">
+                <ServerCrash className="w-6 h-6" />
+              </div>
+              <CardTitle className="text-xl text-white">Configuration Required</CardTitle>
+              <CardDescription className="text-[#E2E8F0] leading-relaxed">
+                Bakery POS cannot start because Firebase is not configured.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant="destructive" className="bg-destructive/5 border-destructive/20 text-destructive-foreground">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Missing Environment Variables</AlertTitle>
+                <AlertDescription className="mt-2 text-sm opacity-90 leading-relaxed font-mono">
+                  Please set the following in your environment:
+                  <ul className="list-disc pl-4 mt-2 space-y-1 opacity-70">
+                    <li>VITE_FIREBASE_API_KEY</li>
+                    <li>VITE_FIREBASE_AUTH_DOMAIN</li>
+                    <li>VITE_FIREBASE_PROJECT_ID</li>
+                    <li>...and other standard Firebase keys.</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+              <Button disabled className="w-full bg-[#2A2D35] text-[#94A3B8] border-transparent rounded-xl h-11">
+                System Offline
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-[#111215] relative overflow-hidden">
+    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-[#0E0F12] relative overflow-hidden">
       {/* Restrained luminous edge effect */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] max-w-[600px] aspect-square bg-[#FF8A00]/10 rounded-full blur-[120px] pointer-events-none opacity-50" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] max-w-[600px] aspect-square bg-[#FF6D00]/10 rounded-full blur-[120px] pointer-events-none opacity-50" />
       
-      <Card className="w-full max-w-sm border-[#FF8A00]/20 bg-[#1C1E24]/80 backdrop-blur-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_48px_rgba(0,0,0,0.6)] relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out z-10 rounded-2xl">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#FF8A00]/50 to-transparent" />
-        
-        <CardHeader className="space-y-4 pb-6 pt-8">
-          <div className="flex justify-center mb-2">
-            <div className="w-14 h-14 rounded-2xl bg-[#1C1E24] border border-[#FF8A00]/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_16px_rgba(0,0,0,0.5)] flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FF8A00]/20 to-transparent opacity-50" />
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#FFB300] via-[#FF8A00] to-[#FF5400] shadow-[0_0_15px_rgba(255,138,0,0.5)]" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5">
-            <CardTitle className="text-2xl font-semibold tracking-tight text-white">Bakery POS</CardTitle>
-            <CardDescription className="text-[#CBD5E1]">
-              Sign in to your register session
-            </CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-5">
-            {error && (
-              <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 py-2.5 animate-in fade-in slide-in-from-top-2">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <AlertDescription className="text-xs ml-2 text-destructive-foreground/90">{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-medium text-[#CBD5E1] uppercase tracking-wider">Email Address</Label>
-                <div className="relative group">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:text-[#FF8A00] transition-colors" />
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="username"
-                    placeholder="baker@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-9 bg-[#111215]/50 border-[#FF8A00]/20 focus-visible:bg-[#111215] focus-visible:ring-1 focus-visible:ring-[#FF8A00] h-11 text-white placeholder:text-[#94A3B8] transition-all rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-medium text-[#CBD5E1] uppercase tracking-wider">Password</Label>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:text-[#FF8A00] transition-colors" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pl-9 pr-10 bg-[#111215]/50 border-[#FF8A00]/20 focus-visible:bg-[#111215] focus-visible:ring-1 focus-visible:ring-[#FF8A00] h-11 text-white font-mono placeholder:font-sans placeholder:text-[#94A3B8] transition-all rounded-xl"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-white transition-colors focus:outline-none rounded"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
+      <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-[#FFD54F] via-[#FF6D00] to-[#14161B] shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15),0_0_0_1px_rgba(255,140,0,0.25)] w-full max-w-sm z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+        <Card className="w-full h-full border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
+          <CardHeader className="space-y-4 pb-6 pt-8">
+            <div className="flex justify-center mb-2">
+              <div className="w-14 h-14 rounded-2xl bg-[#0E0F12] flex items-center justify-center relative overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FF6D00]/10 to-transparent opacity-50" />
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#FFB300] via-[#FF6D00] to-[#F4511E] shadow-[0_0_15px_rgba(255,109,0,0.5)]" />
               </div>
             </div>
+            <div className="text-center space-y-1.5">
+              <CardTitle className="text-2xl font-bold tracking-tight text-white">Bakery POS</CardTitle>
+              <CardDescription className="text-[#E2E8F0]">
+                Sign in to your register session
+              </CardDescription>
+            </div>
+          </CardHeader>
 
-            <Button
-              type="submit"
-              disabled={isLoading || !email || !password}
-              className="w-full h-11 bg-gradient-to-br from-[#FFB300] via-[#FF8A00] to-[#FF5400] hover:brightness-110 text-white font-semibold tracking-wide transition-all active:scale-[0.98] shadow-[0_0_15px_rgba(255,138,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,138,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.4)] disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none border-none rounded-xl"
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Authenticating...</span>
-                </div>
-              ) : (
-                'Access Register'
+          <CardContent>
+            <form onSubmit={handleSignIn} className="space-y-5">
+              {error && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 py-2.5 animate-in fade-in slide-in-from-top-2">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <AlertDescription className="text-xs ml-2 text-destructive-foreground/90">{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-bold text-[#E2E8F0] uppercase tracking-wider">Email Address</Label>
+                  <div className="relative group">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:stroke-[url(#flame-grad)] transition-all" />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="username"
+                      placeholder="baker@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="pl-9 bg-[#0E0F12] border-[#FF6D00]/20 focus-visible:bg-[#0E0F12] focus-visible:ring-1 focus-visible:ring-[#FFD54F] h-12 text-white placeholder:text-[#94A3B8] transition-all rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-xs font-bold text-[#E2E8F0] uppercase tracking-wider">Password</Label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:stroke-[url(#flame-grad)] transition-all" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pl-9 pr-10 bg-[#0E0F12] border-[#FF6D00]/20 focus-visible:bg-[#0E0F12] focus-visible:ring-1 focus-visible:ring-[#FFD54F] h-12 text-white font-mono placeholder:font-sans placeholder:text-[#94A3B8] transition-all rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 group text-[#94A3B8] transition-all focus:outline-none rounded p-1"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 group-hover:stroke-[url(#flame-grad)] transition-all" />
+                      ) : (
+                        <Eye className="w-4 h-4 group-hover:stroke-[url(#flame-grad)] transition-all" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading || !email || !password}
+                className="w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFD54F] hover:via-[#FF8A00] hover:to-[#E64A19] text-white font-bold text-lg tracking-wide transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,109,0,0.4),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_30px_rgba(255,109,0,0.6),0_10px_20px_rgba(0,0,0,0.5)] disabled:opacity-60 disabled:active:scale-100 disabled:shadow-[0_0_20px_rgba(255,109,0,0.2)] border-none rounded-xl"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Authenticating...</span>
+                  </div>
+                ) : (
+                  'Access Register'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
