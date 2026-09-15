@@ -148,43 +148,61 @@ export async function updateMenuItem(
   inventoryOps?: {
     removeKeys: string[];
     addKeys: Record<string, { tierId: string | null; qty: number; lowStockLevel: number }>;
+    updateKeys?: Record<string, { lowStockLevel: number }>;
+    restockKeys?: Record<string, { amount: number; lowStockLevel: number }>;
   }
 ) {
   if (!database) throw new Error('Database not initialized');
-  const now = Date.now();
-  const updates: Record<string, any> = {};
+  const result = await runTransaction(ref(database), (rootData) => {
+    if (!rootData || !rootData.menuItems?.[id]) return undefined;
 
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined) {
-      updates[`menuItems/${id}/${key}`] = value;
-    }
-  });
-  
-  if (data.tiers === null) {
-    updates[`menuItems/${id}/tiers`] = null;
-  }
-  
-  updates[`menuItems/${id}/updatedAt`] = now;
-
-  if (inventoryOps?.removeKeys) {
-    inventoryOps.removeKeys.forEach(key => {
-      updates[`shelfInventory/${key}`] = null;
+    const now = Date.now();
+    const nextItem = { ...rootData.menuItems[id] };
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        nextItem[key] = value;
+      }
     });
-  }
+    nextItem.updatedAt = now;
+    rootData.menuItems[id] = nextItem;
 
-  if (inventoryOps?.addKeys) {
-    Object.entries(inventoryOps.addKeys).forEach(([key, details]) => {
-      updates[`shelfInventory/${key}`] = {
+    rootData.shelfInventory ??= {};
+
+    inventoryOps?.removeKeys?.forEach((key) => {
+      delete rootData.shelfInventory[key];
+    });
+
+    for (const [key, details] of Object.entries(inventoryOps?.addKeys || {})) {
+      rootData.shelfInventory[key] = {
         itemId: id,
         tierId: details.tierId,
         availableQuantity: details.qty,
         lowStockLevel: details.lowStockLevel,
         updatedAt: now,
       };
-    });
-  }
+    }
 
-  await update(ref(database), updates);
+    for (const [key, details] of Object.entries(inventoryOps?.updateKeys || {})) {
+      const node = rootData.shelfInventory[key];
+      if (!node || typeof node.availableQuantity !== 'number') return undefined;
+      node.lowStockLevel = details.lowStockLevel;
+      node.updatedAt = now;
+    }
+
+    for (const [key, details] of Object.entries(inventoryOps?.restockKeys || {})) {
+      const node = rootData.shelfInventory[key];
+      if (!node || typeof node.availableQuantity !== 'number') return undefined;
+      node.availableQuantity += details.amount;
+      node.lowStockLevel = details.lowStockLevel;
+      node.updatedAt = now;
+    }
+
+    return rootData;
+  });
+
+  if (!result.committed) {
+    throw new Error('Could not save the item and inventory changes. The item may have changed elsewhere.');
+  }
 }
 
 export async function deleteMenuItem(id: string, pricingMode: 'piece' | 'weight', tierIds: string[]) {
