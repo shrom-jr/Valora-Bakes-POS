@@ -20,9 +20,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (loading || !mounted) {
     return (
-      <div className="min-h-[100dvh] w-full bg-background flex flex-col items-center justify-center">
+      <div className="min-h-[100dvh] w-full bg-[#111215] flex flex-col items-center justify-center">
         {/* Shimmer skeleton for boot */}
-        <div className="w-full h-14 bg-card border-b border-border animate-pulse absolute top-0 left-0" />
+        <div className="w-full h-14 bg-[#1C1E24] border-b border-[#FF8A00]/20 animate-pulse absolute top-0 left-0" />
       </div>
     );
   }
@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full bg-background flex flex-col overflow-hidden overscroll-none text-foreground selection:bg-primary/30">
+    <div className="min-h-[100dvh] w-full bg-[#111215] flex flex-col overflow-hidden overscroll-none text-white selection:bg-[#FF8A00]/30">
       <CommandBar />
       <main className="flex-1 w-full flex flex-col overflow-hidden relative z-0">
         {children}
