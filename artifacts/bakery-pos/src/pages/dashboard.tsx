@@ -1,23 +1,38 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { Clock, ArrowRight, Loader2, Store, Plus, Minus, X, FileText, Search, Tag, ShoppingBag, AlertCircle, RefreshCw } from 'lucide-react';
+import { Clock, ArrowRight, Loader2, Store, Plus, Minus, X, FileText, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCategories, useMenuItems, useShelfInventory } from '@/hooks/use-rtdb';
 import { useCart, CartItem } from '@/hooks/use-cart';
 import TierSelectorModal from '@/components/register/tier-selector-modal';
+import DiscountControl from '@/components/register/discount-control';
+import TenderModal from '@/components/register/tender-modal';
+import { completeSale } from '@/lib/rtdb';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function Dashboard() {
   const [time, setTime] = useState(new Date());
+  const { user } = useAuth();
   const { categories, loading: catLoading, error: catError } = useCategories();
   const { items, loading: itemsLoading, error: itemsError } = useMenuItems();
   const { inventory, loading: invLoading, error: invError } = useShelfInventory();
-  const { cart, addToCart, incrementQuantity, decrementQuantity, removeFromCart, syncWithInventory } = useCart();
+  const { cart, addToCart, incrementQuantity, decrementQuantity, removeFromCart, clearCart, syncWithInventory } = useCart();
   const { toast } = useToast();
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [selectedItemForTier, setSelectedItemForTier] = useState<any | null>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [discountMode, setDiscountMode] = useState<'flat' | 'percentage'>('flat');
+  const [discountInput, setDiscountInput] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{ mode: 'flat' | 'percentage'; value: number } | null>(null);
+  const [tenderOpen, setTenderOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('cash');
+  const [cashReceived, setCashReceived] = useState(0);
+  const [referenceId, setReferenceId] = useState('');
+  const [processingSale, setProcessingSale] = useState(false);
+  const [tenderError, setTenderError] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -93,7 +108,84 @@ export default function Dashboard() {
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-  const total = subtotal; // Assuming 0% tax for now
+  const discountAmount = useMemo(() => {
+    if (!appliedDiscount) return 0;
+    if (appliedDiscount.mode === 'percentage') {
+      return Math.min(subtotal, Math.max(0, subtotal * Math.min(100, Math.max(0, appliedDiscount.value)) / 100));
+    }
+    return Math.min(subtotal, Math.max(0, appliedDiscount.value));
+  }, [appliedDiscount, subtotal]);
+  const total = Math.max(0, subtotal - discountAmount);
+
+  const handleApplyDiscount = () => {
+    const value = Number(discountInput);
+    if (!Number.isFinite(value) || value < 0) {
+      toast({ title: 'Invalid discount', description: 'Enter a non-negative discount amount.', variant: 'destructive' });
+      return;
+    }
+    const safeValue = discountMode === 'percentage'
+      ? Math.min(100, value)
+      : Math.min(subtotal, value);
+    setAppliedDiscount({ mode: discountMode, value: safeValue });
+    setDiscountInput(String(safeValue));
+    setDiscountOpen(false);
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountInput('');
+    setDiscountOpen(false);
+  };
+
+  const handleOpenTender = () => {
+    if (cart.length === 0 || processingSale) return;
+    setTenderError('');
+    setPaymentMethod('cash');
+    setCashReceived(0);
+    setReferenceId('');
+    setTenderOpen(true);
+  };
+
+  const handleCompleteSale = async (method: 'cash' | 'qr') => {
+    if (cart.length === 0 || processingSale) return;
+    setTenderError('');
+    setProcessingSale(true);
+    try {
+      const result = await completeSale({
+        items: cart.map((item) => ({
+          cartItemId: item.cartItemId,
+          itemId: item.itemId,
+          name: item.name,
+          tierId: item.tierId,
+          tierLabel: item.tierLabel,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        })),
+        discount: appliedDiscount || undefined,
+        paymentMethod: method,
+        cashReceived: method === 'cash' ? cashReceived : undefined,
+        referenceId: method === 'qr' ? referenceId : undefined,
+        userId: user?.uid || null,
+      });
+      setTenderOpen(false);
+      clearCart();
+      handleRemoveDiscount();
+      setCashReceived(0);
+      setReferenceId('');
+      toast({
+        title: `Sale Completed — Order #${result.orderNumber}`,
+        description: method === 'cash'
+          ? `Change due: NPR ${result.changeDue.toFixed(2)}`
+          : `QR payment recorded for NPR ${result.total.toFixed(2)}`,
+      });
+    } catch (err: any) {
+      const message = err?.message || 'The sale could not be completed. The cart was kept intact.';
+      setTenderError(message);
+      toast({ title: 'Sale not completed', description: message, variant: 'destructive' });
+    } finally {
+      setProcessingSale(false);
+    }
+  };
 
   if (catError || itemsError || invError) {
     return (
@@ -317,11 +409,33 @@ export default function Dashboard() {
           </div>
 
           <div className="p-4 bg-[#14161B] shrink-0 space-y-4 relative z-10 border-t border-[#FF6D00]/10">
+            <div className="mb-4 border-b border-[#FF6D00]/10 pb-4">
+              <DiscountControl
+                open={discountOpen}
+                onOpenChange={setDiscountOpen}
+                discountMode={discountMode}
+                onDiscountModeChange={setDiscountMode}
+                inputValue={discountInput}
+                onInputValueChange={setDiscountInput}
+                appliedAmount={discountAmount}
+                subtotal={subtotal}
+                onApply={handleApplyDiscount}
+                onRemove={handleRemoveDiscount}
+                disabled={cart.length === 0 || processingSale}
+              />
+            </div>
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-[#E2E8F0] font-mono">
                 <span className="font-sans">Subtotal</span>
                 <span>NPR {subtotal.toFixed(2)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm font-mono text-[#6EE7B7]">
+                  <span className="font-sans">Discount</span>
+                  <span>- NPR {discountAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-[#E2E8F0] font-mono">
                 <span className="font-sans">Tax (0%)</span>
                 <span>NPR 0.00</span>
@@ -334,8 +448,8 @@ export default function Dashboard() {
             </div>
 
             <Button 
-              disabled={cart.length === 0}
-              onClick={() => toast({ title: 'Checkout arrives in Phase 3', description: 'Payment processing is not yet implemented.' })}
+              disabled={cart.length === 0 || processingSale}
+              onClick={handleOpenTender}
               className="w-full h-14 text-lg font-bold tracking-wide bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] text-white border-transparent opacity-100 rounded-xl shadow-[0_0_20px_rgba(255,109,0,0.4),0_8px_16px_rgba(0,0,0,0.4)] disabled:opacity-60 transition-all hover:scale-[0.98] hover:shadow-[0_0_25px_rgba(255,109,0,0.6),0_10px_20px_rgba(0,0,0,0.5)] active:scale-95"
             >
               Charge <span className="font-mono ml-2">NPR {total.toFixed(2)}</span>
@@ -352,6 +466,30 @@ export default function Dashboard() {
         item={selectedItemForTier}
         inventory={inventory}
         onSelect={handleTierSelect}
+      />
+      <TenderModal
+        open={tenderOpen}
+        onOpenChange={(open) => {
+          if (!processingSale) {
+            setTenderOpen(open);
+            if (!open) setTenderError('');
+          }
+        }}
+        total={total}
+        cashReceived={cashReceived}
+        onCashReceivedChange={setCashReceived}
+        paymentMethod={paymentMethod}
+        onPaymentMethodChange={(method) => {
+          setTenderError('');
+          setPaymentMethod(method);
+        }}
+        referenceId={referenceId}
+        onReferenceIdChange={setReferenceId}
+        onExactCash={() => setCashReceived(total)}
+        onCompleteCash={() => void handleCompleteSale('cash')}
+        onConfirmQr={() => void handleCompleteSale('qr')}
+        processing={processingSale}
+        errorMessage={tenderError}
       />
     </AppShell>
   );

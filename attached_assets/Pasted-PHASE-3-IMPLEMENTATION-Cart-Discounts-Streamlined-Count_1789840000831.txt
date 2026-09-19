@@ -1,0 +1,45 @@
+PHASE 3 IMPLEMENTATION: Cart Discounts, Streamlined Counter Tender, and 1:1 Live Inventory Deduction
+
+Implement Phase 3 for the Bakery POS register (/register). Connect the existing counter cart to a functional checkout flow with discounts, a distraction-free payment modal, and atomic Firebase inventory deduction:
+
+1. Flexible Discount Feature (Cart Sidebar & Mobile Drawer):
+- Add a clean, compact "+ Discount" action above the Subtotal line in the cart panel.
+- Tapping it opens a clean inline input or popover:
+  - Toggle between [ Flat NPR ] and [ Percentage % ].
+  - Numeric input field for discount amount.
+  - Safe floor guard: Discount can never exceed the order subtotal (total cannot go below NPR 0.00).
+  - When applied, display a dedicated "Discount" row in the order breakdown with an option to remove/edit it.
+
+2. Counter Tender Modal (Triggered by "Charge NPR [Total]"):
+- Replace the existing placeholder toast with an executive obsidian modal (#14161B) centered over the counter screen.
+- Tender Mode Switcher (Two high-contrast tabs):
+  A. [ 💵 Cash Tender ]:
+     - Prominent "Total Due: NPR [Total]" in bold monospaced white text.
+     - Single auto-focused numeric input: "Cash Received (NPR)".
+     - A single [ Exact Cash ] button beside the input to auto-fill the total in one click.
+     - (STRICT: Do NOT include cumulative +50, +100, +500 denomination chips).
+     - Live Change Calculation:
+       - If Cash Received >= Total: Render "Change Due: NPR [Calculated Change]" in bold emerald text and enable the "Complete Cash Sale" button.
+       - If Cash Received < Total: Render "Remaining: NPR [Difference]" in amber text and keep the completion button disabled.
+  B. [ 📱 QR Standee ]:
+     - Message: "Customer pays via physical counter QR standee: NPR [Total]".
+     - Optional input: "Ref / Transaction ID (Optional)".
+     - High-impact flame gradient button: "Confirm Payment Received".
+
+3. 1:1 Atomic Firebase Stock Deduction:
+- On sale confirmation (Cash or QR):
+  - Execute an atomic transaction on `/shelfInventory` in the Firebase Realtime Database for all cart items and weight tiers.
+  - Verification: If any cart item's available stock is less than the requested quantity, abort the transaction and display a clear notification without clearing the cart.
+  - Decrement shelf quantities by the exact amounts sold.
+  - If an item or weight tier reaches 0, ensure its status automatically reflects as "Sold Out" on the register touch grid.
+
+4. Cart Reset & State Transition:
+- After the transaction commits successfully:
+  - Close the payment modal.
+  - Clear the current cart and any applied discounts.
+  - Reset the counter view with a subtle success notification ("Sale Completed — Order #[Sequential Number]").
+  - Ready the screen instantly for the next customer in line.
+
+5. Visual & Mobile Standards:
+- Deep obsidian backdrop (#0E0F12, #14161B), sharp white typography, and tabular numbers for financial figures.
+- Ensure the modal is accessible and responsive on both laptop viewports and mobile slide-up cart drawers.

@@ -38,6 +38,41 @@ export interface ShelfInventory {
   updatedAt: number;
 }
 
+export type SalePaymentMethod = 'cash' | 'qr';
+
+export interface SaleItemInput {
+  cartItemId: string;
+  itemId: string;
+  name: string;
+  tierId: string | null;
+  tierLabel: string | null;
+  unitPrice: number;
+  quantity: number;
+}
+
+export interface CompleteSaleInput {
+  items: SaleItemInput[];
+  discount?: {
+    mode: 'flat' | 'percentage';
+    value: number;
+  };
+  paymentMethod: SalePaymentMethod;
+  cashReceived?: number;
+  referenceId?: string;
+  userId?: string | null;
+}
+
+export interface CompleteSaleResult {
+  orderNumber: number;
+  saleId: string;
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+  changeDue: number;
+}
+
+const roundCurrency = (amount: number) => Math.round((amount + Number.EPSILON) * 100) / 100;
+
 // Write Helpers
 export async function createCategory(data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) {
   if (!database) throw new Error('Database not initialized');
@@ -244,6 +279,139 @@ export async function addInventory(inventoryKey: string, amount: number) {
   if (!result.committed) {
     throw new Error('Inventory node is missing or malformed');
   }
+}
+
+export async function completeSale(input: CompleteSaleInput): Promise<CompleteSaleResult> {
+  if (!database) throw new Error('Database not initialized');
+  if (!input.items.length) throw new Error('Cannot complete an empty sale');
+  if (input.items.some((item) => !Number.isInteger(item.quantity) || item.quantity <= 0)) {
+    throw new Error('Sale quantities must be positive whole numbers');
+  }
+  if (input.paymentMethod === 'cash' && (!Number.isFinite(input.cashReceived) || (input.cashReceived || 0) < 0)) {
+    throw new Error('Cash received must be a valid amount');
+  }
+
+  const saleRef = push(ref(database, 'sales'));
+  const saleId = saleRef.key;
+  if (!saleId) throw new Error('Failed to generate sale ID');
+
+  let failureReason = '';
+  const result = await runTransaction(ref(database), (rootData) => {
+    if (!rootData) {
+      failureReason = 'The live register data is unavailable. Please try again.';
+      return undefined;
+    }
+
+    const menuItems = rootData.menuItems || {};
+    const shelfInventory = rootData.shelfInventory || {};
+    const saleItems: Array<SaleItemInput & { lineTotal: number }> = [];
+    let subtotal = 0;
+
+    for (const cartItem of input.items) {
+      const menuItem = menuItems[cartItem.itemId];
+      if (!menuItem || !menuItem.active) {
+        failureReason = `${cartItem.name} is no longer available on the register.`;
+        return undefined;
+      }
+
+      const isPiece = menuItem.pricingMode === 'piece';
+      const liveTier = !isPiece && cartItem.tierId ? menuItem.tiers?.[cartItem.tierId] : null;
+      if (!isPiece && (!cartItem.tierId || !liveTier)) {
+        failureReason = `${cartItem.name} weight tier is no longer available.`;
+        return undefined;
+      }
+
+      const livePrice = isPiece ? menuItem.unitPrice : liveTier?.price;
+      if (typeof livePrice !== 'number' || Math.abs(livePrice - cartItem.unitPrice) > 0.005) {
+        failureReason = `${cartItem.name} changed price while this order was open. Review the cart and try again.`;
+        return undefined;
+      }
+
+      const lineTotal = roundCurrency(livePrice * cartItem.quantity);
+      subtotal = roundCurrency(subtotal + lineTotal);
+      saleItems.push({
+        ...cartItem,
+        tierLabel: liveTier?.label ?? null,
+        unitPrice: livePrice,
+        lineTotal,
+      });
+
+      if (menuItem.trackStock) {
+        const inventoryKey = isPiece ? cartItem.itemId : `${cartItem.itemId}__${cartItem.tierId}`;
+        const stock = shelfInventory[inventoryKey];
+        if (!stock || typeof stock.availableQuantity !== 'number') {
+          failureReason = `${cartItem.name} is missing a live inventory record.`;
+          return undefined;
+        }
+        if (stock.availableQuantity < cartItem.quantity) {
+          failureReason = `Not enough stock for ${cartItem.name}${liveTier ? ` (${liveTier.label})` : ''}. Only ${stock.availableQuantity} remaining.`;
+          return undefined;
+        }
+      }
+    }
+
+    const discountValue = Number(input.discount?.value || 0);
+    const discountAmount = input.discount
+      ? input.discount.mode === 'percentage'
+        ? roundCurrency(subtotal * Math.min(100, Math.max(0, discountValue)) / 100)
+        : roundCurrency(Math.min(subtotal, Math.max(0, discountValue)))
+      : 0;
+    const total = roundCurrency(Math.max(0, subtotal - discountAmount));
+    const cashReceived = input.paymentMethod === 'cash' ? roundCurrency(input.cashReceived || 0) : 0;
+
+    if (input.paymentMethod === 'cash' && cashReceived < total) {
+      failureReason = `Cash received is short by NPR ${roundCurrency(total - cashReceived).toFixed(2)}.`;
+      return undefined;
+    }
+
+    for (const cartItem of saleItems) {
+      const menuItem = menuItems[cartItem.itemId];
+      if (!menuItem.trackStock) continue;
+      const inventoryKey = menuItem.pricingMode === 'piece'
+        ? cartItem.itemId
+        : `${cartItem.itemId}__${cartItem.tierId}`;
+      const stock = shelfInventory[inventoryKey];
+      stock.availableQuantity -= cartItem.quantity;
+      stock.updatedAt = Date.now();
+    }
+
+    const orderNumber = Number(rootData.orderCounter || 0) + 1;
+    rootData.orderCounter = orderNumber;
+    rootData.sales ??= {};
+    rootData.sales[saleId] = {
+      orderNumber,
+      items: saleItems,
+      subtotal,
+      discount: input.discount
+        ? { mode: input.discount.mode, value: discountValue, amount: discountAmount }
+        : null,
+      total,
+      paymentMethod: input.paymentMethod,
+      cashReceived: input.paymentMethod === 'cash' ? cashReceived : null,
+      changeDue: input.paymentMethod === 'cash' ? roundCurrency(cashReceived - total) : 0,
+      referenceId: input.referenceId?.trim() || null,
+      userId: input.userId || null,
+      createdAt: Date.now(),
+    };
+
+    return rootData;
+  });
+
+  if (!result.committed) {
+    throw new Error(failureReason || 'The sale could not be committed because the register changed. Please review the cart and try again.');
+  }
+
+  const savedSale = result.snapshot.val()?.sales?.[saleId];
+  if (!savedSale) throw new Error('Sale committed without a readable receipt record');
+
+  return {
+    orderNumber: savedSale.orderNumber,
+    saleId,
+    subtotal: savedSale.subtotal,
+    discountAmount: savedSale.discount?.amount || 0,
+    total: savedSale.total,
+    changeDue: savedSale.changeDue || 0,
+  };
 }
 
 export async function updateInventory(inventoryKey: string, quantity: number, lowStockLevel: number) {
