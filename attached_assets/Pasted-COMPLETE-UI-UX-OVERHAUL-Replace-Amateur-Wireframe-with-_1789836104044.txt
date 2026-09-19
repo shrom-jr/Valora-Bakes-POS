@@ -1,0 +1,33 @@
+COMPLETE UI/UX OVERHAUL: Replace Amateur Wireframe with Executive-Grade Retail Catalog
+
+The current "Menu & Prices" screen is visually broken: it features an ugly dashed wireframe box, an unstyled calculator keypad crammed onto cards, raw debug metadata, and vast empty space. 
+
+Completely redesign the catalog and menu workspace to match the clean, polished standard of Stripe, Linear, and Square POS while keeping the authentic Firebase "Sunset Ember & Obsidian" aesthetic:
+
+1. Layout & Workspace Architecture:
+- Remove the giant dashed wireframe "+ Add Menu Item" card from the grid completely.
+- Bounded Container: Constrain the catalog view to a modern max-w-6xl container with crisp padding.
+- Unified Action Bar: 
+  - Top Left: Category navigation pills ([All Items], [Cakes], [Pastries]) with an inline "+ Category" icon button.
+  - Top Right: A prominent, radiant flame-gradient button labeled "+ Add Menu Item".
+
+2. Luxury Product Tile Anatomy (Zero Clutter):
+- Card Surface: Deep obsidian squircle (#14161B) with an illuminated top-edge ember rim gradient and subtle shadow.
+- Header: Item name in bold, high-contrast white typography with a discreet edit menu (three dots icon "...") on the right.
+- Metadata & Pricing:
+  - Clean pill badge for category (e.g., "Cakes") in muted amber.
+  - Large, crystal-clear pricing: "NPR 700.00" (or "From NPR 450" for tiered weights) in monospaced bold white.
+- Stock Status Pill:
+  - Sold out: A subtle, refined dark pill with a red dot (`● Sold Out`).
+  - In stock: A crisp dark emerald pill (`● 14 in Stock`).
+  - Unlimited: A subtle gray pill (`● Always Available`).
+
+3. Clean, Non-Intrusive Restocking:
+- Remove the ugly row of buttons (+1, +5, +10, #, +) from the face of the card.
+- In their place, add a single, elegant "Quick Restock" bar or tap the stock badge itself to open a sleek popover containing:
+  - Current stock count display.
+  - Quick tap chips: [+1] [+5] [+10] and a direct numeric input field.
+  - An instant "Confirm" button.
+
+4. Empty Category State:
+- If a selected category has no items, render a clean, centered graphic illustration (bakery icon inside a glowing squircle) with a single crisp headline "No items in this category" and a direct "+ Add Item" button.

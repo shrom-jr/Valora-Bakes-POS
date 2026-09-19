@@ -1,34 +1,68 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useCategories, useMenuItems, useShelfInventory } from '@/hooks/use-rtdb';
 import { swapCategorySortOrders, deleteCategory, deleteMenuItem, addInventory, MenuItem, Category, ShelfInventory } from '@/lib/rtdb';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Loader2, Plus, Edit2, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Settings2,
+  Store,
+  Trash2,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import UnifiedItemEditor from './unified-item-editor';
 import UnifiedCategoryEditor from './unified-category-editor';
 
-const RestockRow = ({ label, price, item, tierId, inventory }: { label: string, price: number, item: MenuItem, tierId: string | null, inventory: Record<string, ShelfInventory> }) => {
-  const invKey = tierId ? `${item.id}__${tierId}` : item.id;
-  const currentQty = inventory[invKey]?.availableQuantity || 0;
-  const lowStockLevel = inventory[invKey]?.lowStockLevel || 5;
+interface RestockPopoverProps {
+  label: string;
+  item: MenuItem;
+  inventoryKey: string;
+  inventory: Record<string, ShelfInventory>;
+}
+
+function RestockPopover({ label, item, inventoryKey, inventory }: RestockPopoverProps) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const inventoryEntry = inventory[inventoryKey];
+  const currentQty = inventoryEntry?.availableQuantity ?? 0;
+  const lowStockLevel = inventoryEntry?.lowStockLevel ?? 5;
   const isSoldOut = currentQty <= 0;
   const isLow = currentQty > 0 && currentQty <= lowStockLevel;
-  
-  const [customAdd, setCustomAdd] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const { toast } = useToast();
 
-  const handleAdd = async (amount: number) => {
-    if (!Number.isInteger(amount) || amount <= 0) {
-      toast({ title: 'Validation', description: 'Restock amount must be a positive integer', variant: 'destructive' });
+  const handleConfirm = async () => {
+    const parsedAmount = Number(amount);
+    if (!Number.isInteger(parsedAmount) || parsedAmount <= 0) {
+      toast({
+        title: 'Validation',
+        description: 'Restock amount must be a positive integer',
+        variant: 'destructive',
+      });
       return;
     }
+
     setProcessing(true);
     try {
-      await addInventory(invKey, amount);
-      toast({ title: `Added ${amount} to ${item.name} (${label})` });
-      setCustomAdd('');
+      await addInventory(inventoryKey, parsedAmount);
+      toast({ title: `Added ${parsedAmount} to ${item.name} (${label})` });
+      setAmount('');
+      setOpen(false);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -36,50 +70,113 @@ const RestockRow = ({ label, price, item, tierId, inventory }: { label: string, 
     }
   };
 
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-end gap-2">
-        <div className="min-w-0">
-          <div className="text-sm text-[#E2E8F0] font-medium truncate">{label}</div>
-          <div className="text-[11px] font-mono text-[#94A3B8]">NPR {price?.toFixed(2)}</div>
-        </div>
-        {item.trackStock ? (
-          <div className={`px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap font-mono font-bold border shrink-0 ${isSoldOut ? 'bg-destructive/10 text-destructive border-destructive/20' : isLow ? 'bg-[#FFB300]/10 text-[#FFB300] border-[#FFB300]/20' : 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20'}`}>
-            {isSoldOut ? 'SOLD OUT' : `${currentQty} IN STOCK`}
-          </div>
-        ) : (
-          <div className="px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap font-mono font-bold bg-[#2A2D35] text-[#94A3B8] border border-[#2A2D35] shrink-0">
-            UNLIMITED
-          </div>
-        )}
-      </div>
+  const statusClass = isSoldOut
+    ? 'border-[#F4511E]/25 bg-[#F4511E]/10 text-[#FF8A65]'
+    : isLow
+      ? 'border-[#FFB300]/25 bg-[#FFB300]/10 text-[#FFD54F]'
+      : 'border-[#10B981]/25 bg-[#10B981]/10 text-[#6EE7B7]';
 
-      {item.trackStock && (
-        <div className="flex items-center gap-1 mt-1">
-          <Button aria-label={`Restock ${label} by 1`} disabled={processing} size="sm" variant="outline" onClick={() => handleAdd(1)} className="h-9 px-0 flex-1 bg-[#0E0F12] border-[#2A2D35] hover:border-[#FF6D00]/50 hover:text-[#FF6D00] text-xs">+1</Button>
-          <Button aria-label={`Restock ${label} by 5`} disabled={processing} size="sm" variant="outline" onClick={() => handleAdd(5)} className="h-9 px-0 flex-1 bg-[#0E0F12] border-[#2A2D35] hover:border-[#FF6D00]/50 hover:text-[#FF6D00] text-xs">+5</Button>
-          <Button aria-label={`Restock ${label} by 10`} disabled={processing} size="sm" variant="outline" onClick={() => handleAdd(10)} className="h-9 px-0 flex-1 bg-[#0E0F12] border-[#2A2D35] hover:border-[#FF6D00]/50 hover:text-[#FF6D00] text-xs">+10</Button>
-          <div className="flex w-[68px] shrink-0">
-            <Input 
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title="Quick Restock"
+          aria-label={`Quick restock ${item.name}, ${label}`}
+          className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition hover:brightness-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300] ${statusClass}`}
+        >
+          <span aria-hidden="true" className="text-[10px]">●</span>
+          <span>{isSoldOut ? 'Sold Out' : `${currentQty} in Stock`}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={10}
+        className="w-[280px] border-[#FF6D00]/25 bg-[#14161B] p-4 text-white shadow-[0_18px_55px_rgba(0,0,0,0.55),0_0_22px_rgba(255,109,0,0.12)]"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-bold text-white">Quick Restock</p>
+            <p className="mt-1 truncate text-xs text-[#94A3B8]">{item.name} · {label}</p>
+          </div>
+
+          <div className="flex items-end justify-between rounded-xl border border-[#FF6D00]/15 bg-[#0E0F12] px-3 py-2.5">
+            <span className="text-xs text-[#94A3B8]">Current stock</span>
+            <span className="font-mono text-lg font-bold text-white">{currentQty}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 5, 10].map((quickAmount) => (
+              <button
+                key={quickAmount}
+                type="button"
+                onClick={() => setAmount(String(quickAmount))}
+                className={`min-h-10 rounded-lg border text-sm font-bold transition ${
+                  amount === String(quickAmount)
+                    ? 'border-[#FF6D00] bg-[#FF6D00]/20 text-[#FFD54F]'
+                    : 'border-[#2A2D35] bg-[#0E0F12] text-[#CBD5E1] hover:border-[#FF6D00]/50 hover:text-white'
+                }`}
+              >
+                +{quickAmount}
+              </button>
+            ))}
+          </div>
+
+          <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-[#94A3B8]">
+            Custom amount
+            <Input
               type="number"
               min="1"
               step="1"
-              aria-label={`Custom restock amount for ${label}`}
-              value={customAdd}
-              onChange={e => setCustomAdd(e.target.value)}
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void handleConfirm();
+              }}
               disabled={processing}
-              className="h-11 px-1 text-center font-mono text-xs rounded-r-none border-[#2A2D35] bg-[#0E0F12] focus-visible:ring-1 focus-visible:ring-[#FF6D00]"
-              placeholder="#"
+              placeholder="Enter quantity"
+              className="mt-2 h-10 border-[#2A2D35] bg-[#0E0F12] font-mono text-white focus-visible:ring-[#FF6D00]"
             />
-            <Button aria-label={`Add custom restock for ${label}`} disabled={processing} size="sm" onClick={() => handleAdd(Number(customAdd || '0'))} className="h-9 px-1.5 rounded-l-none bg-[#FF6D00] hover:bg-[#F4511E] text-white">
-              <Plus className="w-3 h-3" />
-            </Button>
-          </div>
+          </label>
+
+          <Button
+            type="button"
+            onClick={handleConfirm}
+            disabled={processing}
+            className="h-10 w-full border-none bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] font-bold text-white shadow-[0_0_18px_rgba(255,109,0,0.2)] hover:brightness-110"
+          >
+            {processing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+            Confirm Restock
+          </Button>
         </div>
-      )}
-    </div>
-  )
-};
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function UnlimitedBadge() {
+  return (
+    <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#2A2D35] bg-[#0E0F12] px-3 py-1.5 text-xs font-semibold text-[#94A3B8]">
+      <span aria-hidden="true" className="text-[10px] text-[#64748B]">●</span>
+      Always Available
+    </span>
+  );
+}
+
+function StockBadge({
+  item,
+  label,
+  inventoryKey,
+  inventory,
+}: {
+  item: MenuItem;
+  label: string;
+  inventoryKey: string;
+  inventory: Record<string, ShelfInventory>;
+}) {
+  if (!item.trackStock) return <UnlimitedBadge />;
+  return <RestockPopover label={label} item={item} inventoryKey={inventoryKey} inventory={inventory} />;
+}
 
 export default function UnifiedMenuWorkspace() {
   const { categories, loading: catLoading, error: catError } = useCategories();
@@ -87,22 +184,24 @@ export default function UnifiedMenuWorkspace() {
   const { inventory, loading: invLoading, error: invError } = useShelfInventory();
   const { toast } = useToast();
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isItemEditorOpen, setIsItemEditorOpen] = useState(false);
-  
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isCategoryEditorOpen, setIsCategoryEditorOpen] = useState(false);
 
   const filteredItems = useMemo(() => {
     if (selectedCategory === 'all') return items;
-    return items.filter(i => i.categoryId === selectedCategory);
+    return items.filter((item) => item.categoryId === selectedCategory);
   }, [items, selectedCategory]);
 
-  const maxCatSortOrder = useMemo(() => {
-    return categories.length > 0 ? Math.max(...categories.map(c => c.sortOrder)) : 0;
-  }, [categories]);
+  const maxCatSortOrder = useMemo(
+    () => (categories.length > 0 ? Math.max(...categories.map((category) => category.sortOrder)) : 0),
+    [categories],
+  );
+
+  const selectedCategoryData = categories.find((category) => category.id === selectedCategory);
+  const selectedCategoryIndex = categories.findIndex((category) => category.id === selectedCategory);
 
   const handleOpenAddItem = () => {
     if (categories.length === 0) {
@@ -119,30 +218,30 @@ export default function UnifiedMenuWorkspace() {
   };
 
   const handleDeleteItem = async (item: MenuItem) => {
-    if (window.confirm(`Delete ${item.name}?`)) {
-      try {
-        await deleteMenuItem(item.id, item.pricingMode, item.tiers ? Object.keys(item.tiers) : []);
-        toast({ title: 'Item deleted' });
-      } catch (err: any) {
-        toast({ title: 'Error', description: err.message, variant: 'destructive' });
-      }
+    if (!window.confirm(`Delete ${item.name}?`)) return;
+    try {
+      await deleteMenuItem(item.id, item.pricingMode, item.tiers ? Object.keys(item.tiers) : []);
+      toast({ title: 'Item deleted' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
   };
 
-  const handleOpenAddCat = () => {
+  const handleOpenAddCategory = () => {
     setEditingCategory(null);
     setIsCategoryEditorOpen(true);
   };
 
-  const handleOpenEditCat = (cat: Category) => {
-    setEditingCategory(cat);
+  const handleOpenEditCategory = (category: Category) => {
+    setEditingCategory(category);
     setIsCategoryEditorOpen(true);
   };
 
-  const handleMoveCat = async (index: number, dir: number) => {
-    const targetIndex = index + dir;
+  const handleMoveCategory = async (direction: number) => {
+    if (selectedCategoryIndex < 0) return;
+    const targetIndex = selectedCategoryIndex + direction;
     if (targetIndex < 0 || targetIndex >= categories.length) return;
-    const current = categories[index];
+    const current = categories[selectedCategoryIndex];
     const target = categories[targetIndex];
     try {
       await swapCategorySortOrders(current.id, current.sortOrder, target.id, target.sortOrder);
@@ -151,29 +250,27 @@ export default function UnifiedMenuWorkspace() {
     }
   };
 
-  const handleDeleteCat = async (cat: Category) => {
-    const hasItems = items.some(i => i.categoryId === cat.id);
-    if (hasItems) {
+  const handleDeleteCategory = async (category: Category) => {
+    if (items.some((item) => item.categoryId === category.id)) {
       toast({ title: 'Cannot delete', description: 'Category is used by existing menu items.', variant: 'destructive' });
       return;
     }
-    if (window.confirm(`Delete category ${cat.name}?`)) {
-      try {
-        await deleteCategory(cat.id);
-        toast({ title: 'Category deleted' });
-        if (selectedCategory === cat.id) setSelectedCategory('all');
-      } catch (err: any) {
-        toast({ title: 'Error', description: err.message, variant: 'destructive' });
-      }
+    if (!window.confirm(`Delete category ${category.name}?`)) return;
+    try {
+      await deleteCategory(category.id);
+      toast({ title: 'Category deleted' });
+      if (selectedCategory === category.id) setSelectedCategory('all');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
   };
 
   if (catError || itemsError || invError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-12 text-center bg-[#0E0F12]">
-        <AlertCircle className="w-10 h-10 text-destructive mb-4" />
-        <p className="text-white font-bold mb-2">Error loading workspace</p>
-        <Button onClick={() => window.location.reload()} variant="outline" className="bg-[#14161B] text-white border-destructive/20 hover:bg-[#2A2D35]">
+      <div className="flex h-full flex-col items-center justify-center bg-[#0E0F12] p-12 text-center">
+        <AlertCircle className="mb-4 h-10 w-10 text-[#F4511E]" />
+        <p className="mb-2 font-bold text-white">Error loading workspace</p>
+        <Button onClick={() => window.location.reload()} variant="outline" className="border-[#F4511E]/25 bg-[#14161B] text-white hover:bg-[#2A2D35]">
           Retry
         </Button>
       </div>
@@ -181,122 +278,218 @@ export default function UnifiedMenuWorkspace() {
   }
 
   if (catLoading || itemsLoading || invLoading) {
-    return <div className="flex h-full items-center justify-center bg-[#0E0F12]"><Loader2 className="w-8 h-8 animate-spin text-[#FF6D00]" /></div>;
+    return (
+      <div className="flex h-full items-center justify-center bg-[#0E0F12]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#FF6D00]" />
+      </div>
+    );
   }
 
+  const emptyStateTitle = selectedCategory === 'all' ? 'No catalog items yet' : 'No items in this category';
+  const emptyStateDescription = selectedCategory === 'all'
+    ? 'Start building the catalog with your first bakery item.'
+    : `Add an item to ${selectedCategoryData?.name || 'this category'} to see it here.`;
+
   return (
-    <div className="flex flex-col h-full bg-[#0E0F12]">
-      <div className="p-4 md:p-6 border-b border-[#FF6D00]/20 shrink-0">
-        <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Menu & Prices</h1>
-        <p className="text-[#E2E8F0]">Manage catalog, prices, and shelf inventory in real time.</p>
-      </div>
-
-      <div className="flex items-center gap-2 overflow-x-auto p-4 shrink-0 border-b border-[#FF6D00]/10 no-scrollbar relative z-10 bg-[#14161B]/50 backdrop-blur-sm shadow-md">
-         <Button 
-           variant={selectedCategory === 'all' ? 'default' : 'outline'} 
-           onClick={() => setSelectedCategory('all')}
-           className={selectedCategory === 'all' ? 'bg-[#FF6D00] text-white hover:bg-[#F4511E] border-none' : 'bg-[#14161B] text-[#94A3B8] border-[#2A2D35] hover:text-white'}
-         >
-           All Items
-         </Button>
-         {categories.map((cat, i) => (
-           <div key={cat.id} className={`flex items-center rounded-md border ${selectedCategory === cat.id ? 'border-[#FF6D00] bg-[#FF6D00]/10' : 'border-[#2A2D35] bg-[#14161B]'}`}>
-             <button 
-               onClick={() => setSelectedCategory(cat.id)}
-               className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === cat.id ? 'text-white' : cat.active ? 'text-[#94A3B8] hover:text-white' : 'text-[#94A3B8]/50 line-through hover:text-[#94A3B8]'}`}
-             >
-               {cat.name}
-             </button>
-             {selectedCategory === cat.id && (
-               <div className="flex items-center px-1 gap-1 border-l border-[#FF6D00]/20">
-                  <button aria-label={`Move ${cat.name} left`} onClick={() => handleMoveCat(i, -1)} disabled={i === 0} className="min-h-11 min-w-11 p-1.5 text-[#FFD54F] hover:bg-[#FFD54F]/10 rounded disabled:opacity-30 disabled:hover:bg-transparent"><ArrowLeft className="w-3.5 h-3.5"/></button>
-                  <button aria-label={`Move ${cat.name} right`} onClick={() => handleMoveCat(i, 1)} disabled={i === categories.length - 1} className="min-h-11 min-w-11 p-1.5 text-[#FFD54F] hover:bg-[#FFD54F]/10 rounded disabled:opacity-30 disabled:hover:bg-transparent"><ArrowRight className="w-3.5 h-3.5"/></button>
-                  <button aria-label={`Edit ${cat.name}`} onClick={() => handleOpenEditCat(cat)} className="min-h-11 min-w-11 p-1.5 text-[#FFD54F] hover:bg-[#FFD54F]/10 rounded"><Edit2 className="w-3.5 h-3.5"/></button>
-                  <button aria-label={`Delete ${cat.name}`} onClick={() => handleDeleteCat(cat)} className="min-h-11 min-w-11 p-1.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="w-3.5 h-3.5"/></button>
-               </div>
-             )}
-           </div>
-         ))}
-         <Button variant="outline" onClick={handleOpenAddCat} className="bg-[#14161B] text-[#FFB300] border-[#FFB300]/20 hover:bg-[#FFB300]/10 whitespace-nowrap ml-2">
-           <Plus className="w-4 h-4 mr-2" /> Add Category
-         </Button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
-          
-          <button
-             type="button"
-            onClick={handleOpenAddItem}
-             className="border-2 border-dashed border-[#FF6D00]/30 rounded-xl flex flex-col items-center justify-center p-6 cursor-pointer hover:border-[#FF6D00] hover:bg-[#FF6D00]/5 transition-all min-h-[160px] group text-left"
-          >
-            <div className="bg-[#FF6D00]/20 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
-              <Plus className="w-6 h-6 text-[#FFB300]" />
+    <div className="h-full overflow-y-auto bg-[#0E0F12]">
+      <main className="mx-auto min-h-full w-full max-w-6xl px-4 py-5 md:px-8 md:py-8">
+        <header className="mb-7">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Catalog control</p>
+              <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Menu &amp; Prices</h1>
+              <p className="mt-2 max-w-xl text-sm text-[#94A3B8]">A live retail catalog for prices, stock, and bakery-ready availability.</p>
             </div>
-            <span className="text-white font-bold">Add Menu Item</span>
-            <span className="text-[#94A3B8] text-sm text-center mt-1">Create a new item in {selectedCategory === 'all' ? 'the catalog' : categories.find(c=>c.id===selectedCategory)?.name}</span>
-          </button>
+            <div className="font-mono text-xs text-[#64748B]">{items.length} {items.length === 1 ? 'item' : 'items'} · {categories.length} {categories.length === 1 ? 'category' : 'categories'}</div>
+          </div>
+        </header>
 
-          {filteredItems.map(item => {
-            const isPiece = item.pricingMode === 'piece';
-            const isActive = item.active;
-            const cat = categories.find(c => c.id === item.categoryId);
-            
-            return (
-              <div key={item.id} className={`bg-[#14161B] border rounded-xl overflow-hidden flex flex-col transition-all duration-300 ${isActive ? 'border-[#FF6D00]/20 shadow-[0_4px_15px_-3px_rgba(255,109,0,0.05)] hover:border-[#FF6D00]/50 hover:shadow-[0_4px_20px_-3px_rgba(255,109,0,0.1)]' : 'border-[#2A2D35] opacity-75'}`}>
-                <div className="p-3 border-b border-[#2A2D35] bg-[#0E0F12] flex justify-between items-start gap-2 relative">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`font-bold text-base truncate ${isActive ? 'text-white' : 'text-[#94A3B8] line-through'}`}>{item.name}</span>
-                      {!isActive && <span className="text-[9px] uppercase tracking-wider bg-[#2A2D35] text-[#94A3B8] px-1.5 py-0.5 rounded">Inactive</span>}
+        <section aria-label="Catalog actions" className="mb-7 flex flex-col gap-4 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 shadow-[0_12px_35px_rgba(0,0,0,0.2)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto no-scrollbar">
+            <Button
+              type="button"
+              onClick={() => setSelectedCategory('all')}
+              className={`min-h-10 rounded-full px-4 text-sm font-semibold ${selectedCategory === 'all' ? 'bg-[#FF6D00] text-white shadow-[0_0_16px_rgba(255,109,0,0.2)] hover:bg-[#F4511E]' : 'border border-[#2A2D35] bg-[#0E0F12] text-[#94A3B8] hover:border-[#FF6D00]/40 hover:text-white'}`}
+            >
+              All Items
+            </Button>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedCategory(category.id)}
+                className={`min-h-10 whitespace-nowrap rounded-full border px-4 text-sm font-semibold transition ${
+                  selectedCategory === category.id
+                    ? 'border-[#FF6D00]/60 bg-[#FF6D00]/15 text-[#FFD54F]'
+                    : category.active
+                      ? 'border-[#2A2D35] bg-[#0E0F12] text-[#94A3B8] hover:border-[#FF6D00]/40 hover:text-white'
+                      : 'border-[#2A2D35] bg-[#0E0F12] text-[#64748B] line-through hover:text-[#94A3B8]'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleOpenAddCategory}
+              title="Add category"
+              aria-label="Add category"
+              className="min-h-10 min-w-10 rounded-full border-[#FFB300]/30 bg-[#0E0F12] text-[#FFD54F] hover:border-[#FFB300] hover:bg-[#FFB300]/10"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            {selectedCategoryData && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    title={`Manage ${selectedCategoryData.name}`}
+                    aria-label={`Manage ${selectedCategoryData.name}`}
+                    className="min-h-10 min-w-10 rounded-full text-[#64748B] hover:bg-[#FF6D00]/10 hover:text-[#FFD54F]"
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-52 border-[#FF6D00]/20 bg-[#14161B] text-white">
+                  <DropdownMenuLabel className="text-[#94A3B8]">{selectedCategoryData.name}</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#2A2D35]" />
+                  <DropdownMenuItem onSelect={() => void handleMoveCategory(-1)} disabled={selectedCategoryIndex <= 0} className="focus:bg-[#FF6D00]/10 focus:text-white">
+                    <ChevronLeft className="mr-2 h-4 w-4" /> Move left
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void handleMoveCategory(1)} disabled={selectedCategoryIndex < 0 || selectedCategoryIndex >= categories.length - 1} className="focus:bg-[#FF6D00]/10 focus:text-white">
+                    <ChevronRight className="mr-2 h-4 w-4" /> Move right
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleOpenEditCategory(selectedCategoryData)} className="focus:bg-[#FF6D00]/10 focus:text-white">
+                    <Pencil className="mr-2 h-4 w-4" /> Edit category
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void handleDeleteCategory(selectedCategoryData)} className="text-[#FF8A65] focus:bg-[#F4511E]/10 focus:text-[#FF8A65]">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete category
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleOpenAddItem}
+            className="min-h-11 shrink-0 border-none bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] px-5 font-bold text-white shadow-[0_0_22px_rgba(255,109,0,0.25)] hover:brightness-110"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add Menu Item
+          </Button>
+        </section>
+
+        {filteredItems.length === 0 ? (
+          <section className="flex min-h-[420px] flex-col items-center justify-center rounded-[26px] border border-[#FF6D00]/15 bg-[#14161B]/65 px-6 py-16 text-center shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[24px] border border-[#FFB300]/30 bg-gradient-to-br from-[#FFB300]/20 via-[#FF6D00]/10 to-[#F4511E]/20 shadow-[0_0_35px_rgba(255,109,0,0.2)]">
+              <Store className="h-9 w-9 text-[#FFD54F]" />
+            </div>
+            <h2 className="text-xl font-bold text-white">{emptyStateTitle}</h2>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-[#94A3B8]">{emptyStateDescription}</p>
+            <Button
+              type="button"
+              onClick={handleOpenAddItem}
+              className="mt-6 border-none bg-gradient-to-r from-[#FFB300] to-[#F4511E] font-bold text-white shadow-[0_0_18px_rgba(255,109,0,0.2)] hover:brightness-110"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+          </section>
+        ) : (
+          <section aria-label="Catalog items" className="grid grid-cols-1 gap-5 pb-12 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredItems.map((item) => {
+              const category = categories.find((candidate) => candidate.id === item.categoryId);
+              const tiers = Object.values(item.tiers || {});
+              const isPiece = item.pricingMode === 'piece';
+              const lowestPrice = tiers.length > 0 ? Math.min(...tiers.map((tier) => tier.price)) : 0;
+              const displayPrice = isPiece
+                ? `NPR ${(item.unitPrice || 0).toFixed(2)}`
+                : `From NPR ${lowestPrice.toFixed(2)}`;
+
+              return (
+                <article
+                  key={item.id}
+                  className={`group relative overflow-hidden rounded-[22px] border bg-[#14161B] p-5 shadow-[0_14px_35px_rgba(0,0,0,0.26)] transition duration-300 before:absolute before:inset-x-6 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-[#FFD54F] before:to-transparent ${
+                    item.active
+                      ? 'border-[#FF6D00]/15 hover:-translate-y-0.5 hover:border-[#FF6D00]/40 hover:shadow-[0_18px_42px_rgba(0,0,0,0.35),0_0_24px_rgba(255,109,0,0.08)]'
+                      : 'border-[#2A2D35] opacity-75'
+                  }`}
+                >
+                  <header className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h2 className={`truncate text-base font-bold ${item.active ? 'text-white' : 'text-[#94A3B8] line-through'}`}>{item.name}</h2>
+                        {!item.active && <span className="shrink-0 rounded-full bg-[#2A2D35] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#94A3B8]">Inactive</span>}
+                      </div>
+                      <span className="mt-2 inline-flex rounded-full border border-[#FFB300]/20 bg-[#FFB300]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD54F]">
+                        {category?.name || 'Uncategorized'}
+                      </span>
                     </div>
-                    <div className="text-[11px] font-mono text-[#FFB300] uppercase tracking-wider truncate">
-                      {cat?.name || 'Unknown'} • {isPiece ? 'Per Piece' : 'By Weight'}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-0.5 shrink-0 bg-[#0E0F12] pl-2">
-                    <Button aria-label={`Edit ${item.name}`} variant="ghost" size="icon" onClick={() => handleOpenEditItem(item)} className="h-11 w-11 text-[#94A3B8] hover:text-white hover:bg-[#2A2D35]"><Edit2 className="w-3.5 h-3.5" /></Button>
-                    <Button aria-label={`Delete ${item.name}`} variant="ghost" size="icon" onClick={() => handleDeleteItem(item)} className="h-11 w-11 text-destructive hover:bg-destructive/10"><Trash2 className="w-3.5 h-3.5" /></Button>
-                  </div>
-                </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`More actions for ${item.name}`}
+                          className="min-h-10 min-w-10 shrink-0 rounded-full text-[#64748B] hover:bg-[#FF6D00]/10 hover:text-white"
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44 border-[#FF6D00]/20 bg-[#14161B] text-white">
+                        <DropdownMenuItem onSelect={() => handleOpenEditItem(item)} className="focus:bg-[#FF6D00]/10 focus:text-white">
+                          <Pencil className="mr-2 h-4 w-4" /> Edit item
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => void handleDeleteItem(item)} className="text-[#FF8A65] focus:bg-[#F4511E]/10 focus:text-[#FF8A65]">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete item
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </header>
 
-                <div className="p-3 flex-1 flex flex-col gap-3">
-                  {isPiece ? (
-                    <RestockRow 
-                      label="Piece" 
-                      price={item.unitPrice || 0} 
-                      item={item} 
-                      tierId={null} 
-                      inventory={inventory} 
-                    />
-                  ) : (
-                    Object.entries(item.tiers || {}).map(([tierId, tier]) => (
-                      <RestockRow 
-                        key={tierId}
-                        label={tier.label}
-                        price={tier.price}
-                        item={item}
-                        tierId={tierId}
-                        inventory={inventory}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                  <div className="mt-6">
+                    <p className="font-mono text-2xl font-bold tracking-tight text-white">{displayPrice}</p>
+                    <p className="mt-1 text-xs text-[#64748B]">{isPiece ? 'Per piece' : `${tiers.length} weight ${tiers.length === 1 ? 'tier' : 'tiers'}`}</p>
+                  </div>
 
-      <UnifiedItemEditor 
-        isOpen={isItemEditorOpen} 
-        onClose={() => setIsItemEditorOpen(false)} 
-        existingItem={editingItem} 
+                  <div className="mt-6 space-y-2">
+                    {isPiece ? (
+                      <div className="flex items-center justify-between gap-3 border-t border-[#2A2D35] pt-3">
+                        <span className="text-sm text-[#CBD5E1]">Piece</span>
+                        <StockBadge item={item} label="Piece" inventoryKey={item.id} inventory={inventory} />
+                      </div>
+                    ) : (
+                      Object.entries(item.tiers || {}).map(([tierId, tier]) => (
+                        <div key={tierId} className="flex items-center justify-between gap-3 border-t border-[#2A2D35] pt-3 first:border-t-0 first:pt-0">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-[#E2E8F0]">{tier.label}</p>
+                            <p className="mt-1 font-mono text-xs text-[#94A3B8]">NPR {tier.price.toFixed(2)}</p>
+                          </div>
+                          <StockBadge item={item} label={tier.label} inventoryKey={`${item.id}__${tierId}`} inventory={inventory} />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        )}
+      </main>
+
+      <UnifiedItemEditor
+        isOpen={isItemEditorOpen}
+        onClose={() => setIsItemEditorOpen(false)}
+        existingItem={editingItem}
         categories={categories}
         inventory={inventory}
         defaultCategoryId={selectedCategory === 'all' ? categories.find((category) => category.active)?.id : selectedCategory}
       />
-      
+
       <UnifiedCategoryEditor
         isOpen={isCategoryEditorOpen}
         onClose={() => setIsCategoryEditorOpen(false)}
