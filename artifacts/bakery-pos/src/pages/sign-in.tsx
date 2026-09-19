@@ -187,20 +187,22 @@ export default function SignIn() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading || !email || !password}
-                className="w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFD54F] hover:via-[#FF8A00] hover:to-[#E64A19] text-white font-bold text-lg tracking-wide transition-all hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.98] shadow-[0_0_20px_rgba(255,109,0,0.4),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_30px_rgba(255,109,0,0.6),0_10px_20px_rgba(0,0,0,0.5)] disabled:opacity-60 disabled:translate-y-0 disabled:scale-100 disabled:active:scale-100 disabled:shadow-[0_0_20px_rgba(255,109,0,0.2)] border-none rounded-xl"
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Authenticating...</span>
-                  </div>
-                ) : (
-                  'Log In'
-                )}
-              </Button>
+              <div className="group w-full rounded-xl">
+                <Button
+                  type="submit"
+                  disabled={isLoading || !email || !password}
+                  className="w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFC94D] hover:via-[#FF7A18] hover:to-[#E95A1A] text-white font-bold text-lg tracking-wide transition-all hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.98] shadow-[0_0_18px_rgba(255,109,0,0.32),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_24px_rgba(255,109,0,0.45),0_10px_20px_rgba(0,0,0,0.45)] disabled:opacity-60 disabled:translate-y-0 disabled:scale-100 disabled:active:scale-100 disabled:shadow-[0_0_18px_rgba(255,109,0,0.18)] group-hover:disabled:opacity-70 group-hover:disabled:ring-1 group-hover:disabled:ring-[#FF8A00]/40 group-hover:disabled:shadow-[0_0_20px_rgba(255,109,0,0.28)] border-none rounded-xl"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Authenticating...</span>
+                    </div>
+                  ) : (
+                    'Log In'
+                  )}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
