@@ -43,7 +43,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 flex-1 overflow-hidden bg-[#0E0F12]">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 flex-1 bg-[#0E0F12]">
       <aside className="hidden w-64 shrink-0 border-r border-[#FF6D00]/25 bg-[#0E0F12] md:flex md:flex-col">
         <div className="border-b border-[#FF6D00]/15 px-5 py-6">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8]">
@@ -60,7 +60,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex min-h-14 shrink-0 items-center justify-between border-b border-[#FF6D00]/15 bg-[#14161B] px-4 md:hidden">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#FFB300]">Management Portal</p>
@@ -77,7 +77,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <MenuIcon className="h-5 w-5" />
           </Button>
         </div>
-        <div className="dashboard-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-16">{children}</div>
+        <main className="dashboard-scrollbar h-[calc(100vh-4rem)] min-h-0 w-full flex-1 overflow-y-auto overscroll-y-auto p-6 space-y-8 [touch-action:pan-y] lg:p-8">
+          {children}
+        </main>
       </div>
 
       {mobileOpen && (

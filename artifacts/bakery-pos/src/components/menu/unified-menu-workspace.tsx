@@ -6,8 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertCircle,
+  Boxes,
   ChevronLeft,
   ChevronRight,
+  Scale,
+  ShoppingBag,
+  Tags,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -26,6 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UnifiedItemEditor from './unified-item-editor';
 import UnifiedCategoryEditor from './unified-category-editor';
+import ExecutiveKpiCard from '@/components/layout/executive-kpi-card';
 
 export default function UnifiedMenuWorkspace() {
   const { categories, loading: catLoading, error: catError } = useCategories();
@@ -50,6 +55,9 @@ export default function UnifiedMenuWorkspace() {
 
   const selectedCategoryData = categories.find((category) => category.id === selectedCategory);
   const selectedCategoryIndex = categories.findIndex((category) => category.id === selectedCategory);
+  const activeCategoryCount = categories.filter((category) => category.active).length;
+  const pieceItemCount = items.filter((item) => item.pricingMode === 'piece').length;
+  const weightItemCount = items.filter((item) => item.pricingMode === 'weight').length;
 
   const handleOpenAddItem = () => {
     if (categories.length === 0) {
@@ -149,8 +157,8 @@ export default function UnifiedMenuWorkspace() {
 
   return (
     <div className="min-h-full bg-[#0E0F12]">
-      <main className="mx-auto min-h-full w-full max-w-6xl px-4 py-5 md:px-8 md:py-8">
-        <header className="mb-7">
+      <main className="mx-auto min-h-full w-full max-w-6xl space-y-6">
+        <header>
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Catalog control</p>
@@ -161,7 +169,14 @@ export default function UnifiedMenuWorkspace() {
           </div>
         </header>
 
-        <section aria-label="Catalog actions" className="mb-7 flex flex-col gap-4 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 shadow-[0_12px_35px_rgba(0,0,0,0.2)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+        <section aria-label="Catalog summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <ExecutiveKpiCard label="Total Catalog Items" value={String(items.length)} detail="Unique products" icon={ShoppingBag} tone="via-[#FFD54F]" />
+          <ExecutiveKpiCard label="Active Categories" value={String(activeCategoryCount)} detail={`${categories.length} total categories`} icon={Tags} tone="via-[#FFB300]" />
+          <ExecutiveKpiCard label="Per-Piece Items" value={String(pieceItemCount)} detail="Fixed-price products" icon={Boxes} tone="via-[#FF6D00]" />
+          <ExecutiveKpiCard label="Cakes / Weight Items" value={String(weightItemCount)} detail="Tiered products" icon={Scale} tone="via-[#F4511E]" />
+        </section>
+
+        <section aria-label="Catalog actions" className="flex flex-col gap-4 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 shadow-[0_12px_35px_rgba(0,0,0,0.2)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto no-scrollbar">
             <Button
               type="button"
@@ -256,7 +271,7 @@ export default function UnifiedMenuWorkspace() {
             </Button>
           </section>
         ) : (
-        <section aria-label="Catalog items" className="grid grid-cols-1 gap-5 pb-12 sm:grid-cols-2 lg:grid-cols-3">
+        <section aria-label="Catalog items" className="grid grid-cols-1 gap-4 pb-12 md:grid-cols-2 xl:grid-cols-3">
             {filteredItems.map((item) => {
               const category = categories.find((candidate) => candidate.id === item.categoryId);
               const tiers = Object.values(item.tiers || {});
@@ -269,7 +284,7 @@ export default function UnifiedMenuWorkspace() {
               return (
                 <article
                   key={item.id}
-                  className={`group relative overflow-hidden rounded-[22px] border bg-[#14161B] p-5 shadow-[0_14px_35px_rgba(0,0,0,0.26)] transition duration-300 before:absolute before:inset-x-6 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-[#FFD54F] before:to-transparent ${
+                  className={`group relative min-h-[130px] overflow-hidden rounded-xl border bg-[#14161B] p-4 shadow-[0_14px_35px_rgba(0,0,0,0.26)] transition duration-300 before:absolute before:inset-x-6 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-[#FFD54F] before:to-transparent ${
                     item.active
                       ? 'border-[#FF6D00]/15 hover:-translate-y-0.5 hover:border-[#FF6D00]/40 hover:shadow-[0_18px_42px_rgba(0,0,0,0.35),0_0_24px_rgba(255,109,0,0.08)]'
                       : 'border-[#2A2D35] opacity-75'
@@ -281,7 +296,7 @@ export default function UnifiedMenuWorkspace() {
                         <h2 className={`truncate text-base font-bold ${item.active ? 'text-white' : 'text-[#94A3B8] line-through'}`}>{item.name}</h2>
                         {!item.active && <span className="shrink-0 rounded-full bg-[#2A2D35] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#94A3B8]">Inactive</span>}
                       </div>
-                      <span className="mt-2 inline-flex rounded-full border border-[#FFB300]/20 bg-[#FFB300]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD54F]">
+                      <span className="mt-2 inline-flex rounded-full border border-[#FFB300]/20 bg-[#FFB300]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD54F]">
                         {category?.name || 'Uncategorized'}
                       </span>
                     </div>
@@ -308,16 +323,16 @@ export default function UnifiedMenuWorkspace() {
                     </DropdownMenu>
                   </header>
 
-                  <div className="mt-6">
-                    <p className="font-mono text-2xl font-bold tracking-tight text-white">{displayPrice}</p>
+                  <div className="mt-3">
+                    <p className="font-mono text-xl font-bold tracking-tight text-white">{displayPrice}</p>
                     <p className="mt-1 text-xs text-[#64748B]">{isPiece ? 'Per piece' : `${tiers.length} weight ${tiers.length === 1 ? 'tier' : 'tiers'}`}</p>
                   </div>
 
-                  <div className="mt-6 space-y-2 border-t border-[#2A2D35] pt-3">
+                  <div className="mt-3 border-t border-[#2A2D35] pt-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-[#E2E8F0]">Active on POS</p>
-                        <p className="mt-1 text-xs text-[#64748B]">{item.active ? 'Visible to cashiers' : 'Hidden from register'}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${item.active ? 'bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.7)]' : 'bg-[#64748B]'}`} />
+                        <p className="text-xs font-semibold text-[#E2E8F0]">Active on POS</p>
                       </div>
                       <Switch
                         checked={item.active}

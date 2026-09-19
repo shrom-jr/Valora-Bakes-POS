@@ -6,6 +6,7 @@
 .dashboard-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 109, 0, 0.7) rgba(20, 22, 27, 0.9);
+  touch-action: pan-y;
 }
 
 .dashboard-scrollbar::-webkit-scrollbar {

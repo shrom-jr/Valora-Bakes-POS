@@ -60,7 +60,7 @@ export default function DashboardOverview() {
           </div>
         ) : (
           <div className="min-h-full bg-[#0E0F12]">
-            <main className="mx-auto w-full max-w-6xl px-4 py-5 md:px-8 md:py-8">
+            <main className="mx-auto w-full max-w-6xl space-y-6">
               <header className="mb-7">
                 <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Daily control room</p>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">Overview</h1>

@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { AlertCircle, Loader2, PackageSearch, Plus, RefreshCw } from 'lucide-react';
+import { AlertCircle, Boxes, CheckCircle2, CircleX, Loader2, PackageSearch, Plus, RefreshCw, TriangleAlert } from 'lucide-react';
 import { useCategories, useMenuItems, useShelfInventory } from '@/hooks/use-rtdb';
 import { addInventory, MenuItem, ShelfInventory } from '@/lib/rtdb';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import ExecutiveKpiCard from '@/components/layout/executive-kpi-card';
 
 function InventoryActions({ item, label, inventoryKey, inventory }: { item: MenuItem; label: string; inventoryKey: string; inventory: Record<string, ShelfInventory> }) {
   const { toast } = useToast();
@@ -83,15 +84,16 @@ function StockPill({ item, stock }: { item: MenuItem; stock?: ShelfInventory }) 
       soldOut ? 'border-[#F4511E]/25 bg-[#F4511E]/10 text-[#FF8A65]' : low ? 'border-[#FFB300]/25 bg-[#FFB300]/10 text-[#FFD54F]' : 'border-[#10B981]/25 bg-[#10B981]/10 text-[#6EE7B7]'
     }`}>
       <span className="text-[10px]">●</span>
-      {soldOut ? 'Sold Out' : `${quantity} in Stock`}
+      {soldOut ? 'Sold Out' : low ? 'Low Stock' : 'In Stock'}
     </span>
   );
 }
 
-function InventoryLine({ item, label, inventoryKey, inventory }: { item: MenuItem; label: string; inventoryKey: string; inventory: Record<string, ShelfInventory> }) {
+function InventoryLine({ item, label, categoryName, inventoryKey, inventory }: { item: MenuItem; label: string; categoryName: string; inventoryKey: string; inventory: Record<string, ShelfInventory> }) {
   const stock = inventory[inventoryKey];
+  const quantity = stock?.availableQuantity ?? 0;
   return (
-    <div className="grid gap-4 border-t border-[#2A2D35] px-4 py-4 first:border-t-0 md:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1.4fr)] md:items-center">
+    <div className="grid gap-3 border-t border-[#2A2D35] px-4 py-3 first:border-t-0 md:grid-cols-[minmax(0,1.35fr)_minmax(0,0.75fr)_auto_auto_minmax(0,1.6fr)] md:items-center">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-bold text-white">{item.name}</p>
@@ -99,6 +101,8 @@ function InventoryLine({ item, label, inventoryKey, inventory }: { item: MenuIte
         </div>
         <p className="mt-1 text-xs text-[#94A3B8]">{label} · {item.pricingMode === 'piece' ? 'Per Piece' : 'By Weight / Pound'}</p>
       </div>
+      <span className="truncate text-xs font-semibold text-[#CBD5E1]">{categoryName}</span>
+      <span className="font-mono text-sm font-bold text-white">{item.trackStock ? quantity : '—'}</span>
       <StockPill item={item} stock={stock} />
       {item.trackStock ? (
         <InventoryActions item={item} label={label} inventoryKey={inventoryKey} inventory={inventory} />
@@ -115,10 +119,37 @@ export default function InventoryWorkspace() {
   const { inventory, loading: inventoryLoading, error: inventoryError } = useShelfInventory();
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const filteredItems = useMemo(() => {
-    if (selectedCategory === 'all') return items;
-    return items.filter((item) => item.categoryId === selectedCategory);
-  }, [items, selectedCategory]);
+  const inventoryRows = useMemo(() => items.flatMap((item) => {
+    const categoryName = categories.find((category) => category.id === item.categoryId)?.name || 'Uncategorized';
+    if (item.pricingMode === 'piece') {
+      return [{ item, label: 'Per piece', categoryName, inventoryKey: item.id, stock: inventory[item.id] }];
+    }
+    return Object.entries(item.tiers || {}).map(([tierId, tier]) => ({
+      item,
+      label: tier.label,
+      categoryName,
+      inventoryKey: `${item.id}__${tierId}`,
+      stock: inventory[`${item.id}__${tierId}`],
+    }));
+  }), [categories, inventory, items]);
+
+  const filteredRows = useMemo(
+    () => selectedCategory === 'all' ? inventoryRows : inventoryRows.filter((row) => row.item.categoryId === selectedCategory),
+    [inventoryRows, selectedCategory],
+  );
+
+  const trackedRows = inventoryRows.filter((row) => row.item.trackStock);
+  const totalShelfUnits = trackedRows.reduce((total, row) => total + (row.stock?.availableQuantity ?? 0), 0);
+  const fullyStockedCount = trackedRows.filter((row) => {
+    const quantity = row.stock?.availableQuantity ?? 0;
+    return quantity > (row.stock?.lowStockLevel ?? 5);
+  }).length;
+  const lowStockCount = trackedRows.filter((row) => {
+    const quantity = row.stock?.availableQuantity ?? 0;
+    const threshold = row.stock?.lowStockLevel ?? 5;
+    return quantity > 0 && quantity <= threshold;
+  }).length;
+  const soldOutCount = trackedRows.filter((row) => (row.stock?.availableQuantity ?? 0) <= 0).length;
 
   const isLoading = categoriesLoading || itemsLoading || inventoryLoading;
 
@@ -140,8 +171,8 @@ export default function InventoryWorkspace() {
 
   return (
     <div className="min-h-full bg-[#0E0F12]">
-      <main className="mx-auto w-full max-w-6xl px-4 py-5 md:px-8 md:py-8">
-        <header className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <main className="mx-auto w-full max-w-6xl space-y-6">
+        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Morning bake control</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">Shelf Inventory</h1>
@@ -149,11 +180,18 @@ export default function InventoryWorkspace() {
           </div>
           <div className="flex items-center gap-2 text-xs font-mono text-[#64748B]">
             <PackageSearch className="h-4 w-4 text-[#FFD54F]" />
-            {filteredItems.length} sellable {filteredItems.length === 1 ? 'item' : 'items'}
+            {filteredRows.length} stock {filteredRows.length === 1 ? 'line' : 'lines'}
           </div>
         </header>
 
-        <section aria-label="Inventory filters" className="mb-5 flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 no-scrollbar">
+        <section aria-label="Shelf health summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <ExecutiveKpiCard label="Total Shelf Units" value={String(totalShelfUnits)} detail="Baked units available" icon={Boxes} tone="via-[#FFD54F]" />
+          <ExecutiveKpiCard label="Fully Stocked" value={String(fullyStockedCount)} detail="Above warning level" icon={CheckCircle2} tone="via-[#10B981]" />
+          <ExecutiveKpiCard label="Low Stock Warnings" value={String(lowStockCount)} detail="Needs a fresh bake" icon={TriangleAlert} tone="via-[#FFB300]" />
+          <ExecutiveKpiCard label="Sold Out Bakes" value={String(soldOutCount)} detail="Currently at zero" icon={CircleX} tone="via-[#F4511E]" />
+        </section>
+
+        <section aria-label="Inventory filters" className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 no-scrollbar">
           <Button
             type="button"
             onClick={() => setSelectedCategory('all')}
@@ -174,26 +212,30 @@ export default function InventoryWorkspace() {
         </section>
 
         <section className="overflow-hidden rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] shadow-[0_14px_35px_rgba(0,0,0,0.2)]">
-          <div className="hidden grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1.4fr)] gap-4 border-b border-[#FF6D00]/15 bg-[#0E0F12]/70 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B] md:grid">
-            <span>Product / tier</span>
+          <div className="hidden grid-cols-[minmax(0,1.35fr)_minmax(0,0.75fr)_auto_auto_minmax(0,1.6fr)] gap-3 border-b border-[#FF6D00]/15 bg-[#0E0F12]/70 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B] md:grid">
+            <span>Product / variant</span>
+            <span>Category</span>
+            <span>Current shelf stock</span>
             <span>Live status</span>
-            <span>Morning bake actions</span>
+            <span>Quick add fresh bake</span>
           </div>
-          {filteredItems.length === 0 ? (
+          {filteredRows.length === 0 ? (
             <div className="flex min-h-[320px] flex-col items-center justify-center px-6 py-12 text-center">
               <PackageSearch className="h-9 w-9 text-[#64748B]" />
               <h2 className="mt-4 text-lg font-bold text-white">No products in this category</h2>
               <p className="mt-2 text-sm text-[#94A3B8]">Inventory rows will appear when products are added.</p>
             </div>
           ) : (
-            filteredItems.map((item) => {
-              if (item.pricingMode === 'piece') {
-                return <InventoryLine key={item.id} item={item} label="Per piece" inventoryKey={item.id} inventory={inventory} />;
-              }
-              return Object.entries(item.tiers || {}).map(([tierId, tier]) => (
-                <InventoryLine key={`${item.id}-${tierId}`} item={item} label={tier.label} inventoryKey={`${item.id}__${tierId}`} inventory={inventory} />
-              ));
-            })
+            filteredRows.map((row) => (
+              <InventoryLine
+                key={row.inventoryKey}
+                item={row.item}
+                label={row.label}
+                categoryName={row.categoryName}
+                inventoryKey={row.inventoryKey}
+                inventory={inventory}
+              />
+            ))
           )}
         </section>
       </main>

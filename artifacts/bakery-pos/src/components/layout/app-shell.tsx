@@ -32,9 +32,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#0E0F12] flex flex-col overflow-hidden overscroll-none text-white selection:bg-[#FF6D00]/30">
+    <div className="min-h-[100dvh] w-full bg-[#0E0F12] flex flex-col text-white selection:bg-[#FF6D00]/30">
       <CommandBar />
-      <main className="flex-1 w-full flex flex-col overflow-hidden relative z-0">
+      <main className="flex min-h-0 flex-1 w-full flex-col relative z-0">
         {children}
       </main>
     </div>

@@ -1,0 +1,44 @@
+CRITICAL UI/UX RESCUE: Fix Touchpad Scrolling, Add Executive KPIs, and Compact Menu & Inventory Layouts
+
+The current dashboard has three major flaws: two-finger touchpad scrolling fails because wheel events are blocked, Menu Management lacks summary KPIs and has bloated cards, and Inventory lacks stock health metrics and looks empty. Refactor the entire dashboard workspace immediately:
+
+1. Fix Touchpad Two-Finger Scrolling Engine:
+- The content container currently blocks touchpad wheel/scroll gestures.
+- In the dashboard shell and layout components, remove any `touch-action: none`, event-interception traps, or rigid nested `overflow-hidden` wrappers on parent containers.
+- The main content area must be configured for native fluid scrolling:
+  - Container class: `h-[calc(100vh-4rem)] w-full overflow-y-auto overscroll-y-auto [touch-action:pan-y] p-6 lg:p-8 space-y-8`
+  - Ensure standard mousewheel and touchpad two-finger scroll events bubble and trigger native vertical scrolling without requiring manual scrollbar dragging.
+
+2. Menu Management (/dashboard/menu) Overhaul:
+A. Top Executive KPI Bar (4 Compact Cards):
+   - Card 1: "Total Catalog Items" (Total count of unique products).
+   - Card 2: "Active Categories" (Total count of bakery categories).
+   - Card 3: "Per-Piece Items" (Count of items sold by fixed piece).
+   - Card 4: "Cakes / Weight Items" (Count of items sold with pound/weight tiers).
+   - Style: Sleek obsidian cards (#14161B) with subtle hairline borders, crisp silver labels, and bold monospaced white figures.
+
+B. High-Density Compact Catalog Grid:
+   - Shrink the product cards down from bloated monolithic blocks into compact, professional tiles (~130px height).
+   - Multi-Column Grid: Render items in a responsive 2 to 3-column layout (`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4`).
+   - Card Anatomy:
+     - Top row: Bold white item title + clean Category badge (e.g., [Cakes]) + 3-dot edit/delete menu.
+     - Middle row: Monospaced pricing (e.g., "From NPR 700.00" or "NPR 120.00") in bold amber/white.
+     - Bottom row: A clean "Active on POS" toggle switch with an emerald dot indicator.
+     - ZERO restock controls on this page. Pure catalog management only.
+
+3. Inventory Workspace (/dashboard/inventory) Overhaul:
+A. Top Shelf Health KPI Bar (4 Compact Cards):
+   - Card 1: "Total Shelf Units" (Total sum of all baked items currently available on the shelf).
+   - Card 2: "Fully Stocked" (Count of items with healthy inventory levels).
+   - Card 3: "Low Stock Warnings" (Count of items at or below low stock threshold).
+   - Card 4: "Sold Out Bakes" (Count of items currently at 0 shelf stock).
+
+B. High-Density Shelf Stock Table:
+   - Clean Category Filter Ribbon at the top ([All Items], [Cakes], [Croissants], etc.).
+   - Replace the lonely void with an organized, high-density inventory table:
+     - Columns: [ Product & Variant ] | [ Category ] | [ Current Shelf Stock ] | [ Status ] | [ Quick Add Fresh Bake ]
+     - Status: Crisp dark pill (Emerald `● In Stock`, Amber `● Low Stock`, Crimson `● Sold Out`).
+     - Quick Restock: Direct tactile one-tap buttons [+1], [+5], [+10] and a compact number input that triggers atomic Firebase transactions updating `shelfInventory` instantly.
+
+4. Design System Adherence:
+Preserve the approved Firebase "Sunset Ember & Obsidian" palette: obsidian background (#0E0F12, #14161B), sharp white typography, vibrant flame buttons (#FFB300 via #FF6D00 to #F4511E), and top-edge rim illumination on all cards.
