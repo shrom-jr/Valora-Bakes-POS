@@ -14,7 +14,7 @@ export default function Boot() {
         // Will be handled by the sign-in page, which shows the config message
         setLocation('/sign-in');
       } else if (user) {
-        setLocation('/dashboard');
+        setLocation('/register');
       } else {
         setLocation('/sign-in');
       }

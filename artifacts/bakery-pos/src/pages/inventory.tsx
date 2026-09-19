@@ -1,13 +1,13 @@
 import React from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import DashboardShell from '@/components/layout/dashboard-shell';
-import UnifiedMenuWorkspace from '@/components/menu/unified-menu-workspace';
+import InventoryWorkspace from '@/components/inventory/inventory-workspace';
 
-export default function MenuPage() {
+export default function InventoryPage() {
   return (
     <AppShell>
       <DashboardShell>
-        <UnifiedMenuWorkspace />
+        <InventoryWorkspace />
       </DashboardShell>
     </AppShell>
   );

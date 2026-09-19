@@ -136,7 +136,7 @@ export default function Dashboard() {
           <p className="text-[#E2E8F0] max-w-md mx-auto leading-relaxed mb-8">
             Your catalog is currently empty. Head over to the Menu workspace to set up your first categories and items.
           </p>
-          <Link href="/menu" className="h-12 px-6 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFD54F] hover:via-[#FF8A00] hover:to-[#E64A19] text-white font-bold rounded-xl shadow-[0_0_20px_rgba(255,109,0,0.4)] flex items-center transition-all active:scale-95">
+          <Link href="/dashboard/menu" className="h-12 px-6 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFD54F] hover:via-[#FF8A00] hover:to-[#E64A19] text-white font-bold rounded-xl shadow-[0_0_20px_rgba(255,109,0,0.4)] flex items-center transition-all active:scale-95">
             Set Up First Menu Item
           </Link>
         </div>

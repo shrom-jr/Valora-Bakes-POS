@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,8 +7,10 @@ import NotFound from '@/pages/not-found';
 import { AuthProvider } from '@/contexts/auth-context';
 import Boot from '@/pages/boot';
 import SignIn from '@/pages/sign-in';
-import Dashboard from '@/pages/dashboard';
+import Register from '@/pages/dashboard';
+import DashboardOverview from '@/pages/dashboard-overview';
 import Menu from '@/pages/menu';
+import Inventory from '@/pages/inventory';
 
 import {
   Route,
@@ -40,13 +42,26 @@ function Router() {
         <Switch>
           <Route path="/" component={Boot} />
           <Route path="/sign-in" component={SignIn} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/menu" component={Menu} />
+          <Route path="/register" component={Register} />
+          <Route path="/dashboard/menu" component={Menu} />
+          <Route path="/dashboard/inventory" component={Inventory} />
+          <Route path="/dashboard" component={DashboardOverview} />
+          <Route path="/menu" component={LegacyMenuRedirect} />
           <Route component={NotFound} />
         </Switch>
       </RoutedErrorBoundary>
     </AuthProvider>
   );
+}
+
+function LegacyMenuRedirect() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    setLocation('/dashboard/menu', { replace: true });
+  }, [setLocation]);
+
+  return null;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
