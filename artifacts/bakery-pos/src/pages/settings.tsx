@@ -156,22 +156,14 @@ export default function SettingsPage() {
 
             <form onSubmit={saveProfile} className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5 md:p-6">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="flex items-center gap-3">
+                  <img src="/logo.png" alt="Valora Bakes brand logo" className="h-12 w-12 rounded-full object-cover border border-amber-500/30 shadow-md" />
+                  <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Business identity</p>
                   <h2 className="mt-2 text-xl font-bold text-white">Business Profile</h2>
+                  </div>
                 </div>
                 <Store className="h-5 w-5 text-[#FFD54F]" />
-              </div>
-              <div className="mt-6 rounded-xl border border-[#FFB300]/25 bg-[#0E0F12] p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Brand Identity</p>
-                <div className="mt-4 flex flex-col items-center justify-center">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full border border-[#FFB300]/45 bg-[#14161B] p-2 shadow-[0_0_22px_rgba(255,109,0,0.16)]">
-                    <img src="/logo.png" alt="Valora Bakes brand logo" className="h-full w-full rounded-full object-contain" />
-                  </div>
-                  <span className="mt-3 rounded-full border border-[#FFB300]/25 bg-[#FFB300]/10 px-3 py-1 text-[11px] font-semibold text-[#FFD54F]">
-                    Active Brand Asset: /public/logo.png
-                  </span>
-                </div>
               </div>
               <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Bakery Name" value={profile.bakeryName} onChange={(value) => setProfile({ ...profile, bakeryName: value })} required />

@@ -32,7 +32,7 @@ export default function CommandBar() {
         <img
           src="/logo.png"
           alt="Valora Bakes"
-          className="h-8 w-8 rounded-full object-contain bg-white/5 border border-amber-500/20"
+          className="h-10 w-10 rounded-full object-cover bg-white shadow-md ring-1 ring-amber-500/40"
         />
         
         <span className="font-bold text-white tracking-wide">Bakery POS</span>
