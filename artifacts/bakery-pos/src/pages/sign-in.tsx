@@ -190,7 +190,7 @@ export default function SignIn() {
               <Button
                 type="submit"
                 disabled={isLoading || !email || !password}
-                className="w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFD54F] hover:via-[#FF8A00] hover:to-[#E64A19] text-white font-bold text-lg tracking-wide transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,109,0,0.4),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_30px_rgba(255,109,0,0.6),0_10px_20px_rgba(0,0,0,0.5)] disabled:opacity-60 disabled:active:scale-100 disabled:shadow-[0_0_20px_rgba(255,109,0,0.2)] border-none rounded-xl"
+                className="w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFD54F] hover:via-[#FF8A00] hover:to-[#E64A19] text-white font-bold text-lg tracking-wide transition-all hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.98] shadow-[0_0_20px_rgba(255,109,0,0.4),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_30px_rgba(255,109,0,0.6),0_10px_20px_rgba(0,0,0,0.5)] disabled:opacity-60 disabled:translate-y-0 disabled:scale-100 disabled:active:scale-100 disabled:shadow-[0_0_20px_rgba(255,109,0,0.2)] border-none rounded-xl"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
