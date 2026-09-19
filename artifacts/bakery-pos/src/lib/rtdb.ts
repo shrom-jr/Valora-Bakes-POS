@@ -50,6 +50,57 @@ export interface SaleItemInput {
   quantity: number;
 }
 
+export interface SaleRecordItem extends SaleItemInput {
+  lineTotal: number;
+  trackStock: boolean;
+  inventoryKey: string | null;
+}
+
+export interface SaleRecord {
+  orderNumber: number;
+  dateKey: string;
+  items: SaleRecordItem[];
+  subtotal: number;
+  discount: { mode: 'flat' | 'percentage'; value: number; amount: number } | null;
+  total: number;
+  paymentMethod: SalePaymentMethod;
+  cashReceived: number | null;
+  changeDue: number;
+  referenceId: string | null;
+  userId: string | null;
+  createdAt: number;
+  status: 'COMPLETED' | 'VOIDED';
+  voidedAt?: number;
+  voidedBy?: string | null;
+  voidReason?: string;
+}
+
+export interface DailySummary {
+  totalSales: number;
+  orderCount: number;
+  cashInflow: number;
+  digitalInflow: number;
+  totalExpenses: number;
+  cashDrawerExpenses: number;
+  physicalCashToTally: number;
+  netProfit: number;
+  updatedAt: number;
+}
+
+export type ExpenseCategory = 'dairy' | 'packaging' | 'kitchen' | 'utilities' | 'other';
+export type ExpensePaidFrom = 'cashDrawer' | 'bankPersonal';
+
+export interface ExpenseRecord {
+  id: string;
+  dateKey: string;
+  amount: number;
+  category: ExpenseCategory;
+  paidFrom: ExpensePaidFrom;
+  note: string | null;
+  createdAt: number;
+  userId: string | null;
+}
+
 export interface CompleteSaleInput {
   items: SaleItemInput[];
   discount?: {
@@ -72,6 +123,24 @@ export interface CompleteSaleResult {
 }
 
 const roundCurrency = (amount: number) => Math.round((amount + Number.EPSILON) * 100) / 100;
+const emptyDailySummary = (): DailySummary => ({
+  totalSales: 0,
+  orderCount: 0,
+  cashInflow: 0,
+  digitalInflow: 0,
+  totalExpenses: 0,
+  cashDrawerExpenses: 0,
+  physicalCashToTally: 0,
+  netProfit: 0,
+  updatedAt: Date.now(),
+});
+
+export function getDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 // Write Helpers
 export async function createCategory(data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) {
@@ -304,7 +373,7 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
 
     const menuItems = rootData.menuItems || {};
     const shelfInventory = rootData.shelfInventory || {};
-    const saleItems: Array<SaleItemInput & { lineTotal: number }> = [];
+    const saleItems: SaleRecordItem[] = [];
     let subtotal = 0;
 
     for (const cartItem of input.items) {
@@ -334,6 +403,10 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
         tierLabel: liveTier?.label ?? null,
         unitPrice: livePrice,
         lineTotal,
+        trackStock: Boolean(menuItem.trackStock),
+        inventoryKey: menuItem.trackStock
+          ? isPiece ? cartItem.itemId : `${cartItem.itemId}__${cartItem.tierId}`
+          : null,
       });
 
       if (menuItem.trackStock) {
@@ -376,10 +449,28 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
     }
 
     const orderNumber = Number(rootData.orderCounter || 0) + 1;
+    const dateKey = getDateKey();
+    const summary = {
+      ...emptyDailySummary(),
+      ...(rootData.dailySummaries?.[dateKey] || {}),
+    };
+    summary.totalSales = roundCurrency(summary.totalSales + total);
+    summary.orderCount += 1;
+    if (input.paymentMethod === 'cash') {
+      summary.cashInflow = roundCurrency(summary.cashInflow + total);
+    } else {
+      summary.digitalInflow = roundCurrency(summary.digitalInflow + total);
+    }
+    summary.physicalCashToTally = roundCurrency(summary.cashInflow - summary.cashDrawerExpenses);
+    summary.netProfit = roundCurrency(summary.totalSales - summary.totalExpenses);
+    summary.updatedAt = Date.now();
+    rootData.dailySummaries ??= {};
+    rootData.dailySummaries[dateKey] = summary;
     rootData.orderCounter = orderNumber;
     rootData.sales ??= {};
     rootData.sales[saleId] = {
       orderNumber,
+      dateKey,
       items: saleItems,
       subtotal,
       discount: input.discount
@@ -392,6 +483,7 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
       referenceId: input.referenceId?.trim() || null,
       userId: input.userId || null,
       createdAt: Date.now(),
+      status: 'COMPLETED',
     };
 
     return rootData;
@@ -412,6 +504,134 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
     total: savedSale.total,
     changeDue: savedSale.changeDue || 0,
   };
+}
+
+export async function addExpense(input: {
+  dateKey?: string;
+  amount: number;
+  category: ExpenseCategory;
+  paidFrom: ExpensePaidFrom;
+  note?: string;
+  userId?: string | null;
+}): Promise<ExpenseRecord> {
+  if (!database) throw new Error('Database not initialized');
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    throw new Error('Expense amount must be greater than zero');
+  }
+  const amount = roundCurrency(input.amount);
+  const dateKey = input.dateKey || getDateKey();
+  const expenseRef = push(ref(database, `expenses/${dateKey}`));
+  const expenseId = expenseRef.key;
+  if (!expenseId) throw new Error('Failed to generate expense ID');
+
+  let savedExpense: ExpenseRecord | null = null;
+  const result = await runTransaction(ref(database), (rootData) => {
+    if (!rootData) return undefined;
+    const now = Date.now();
+    const expense: ExpenseRecord = {
+      id: expenseId,
+      dateKey,
+      amount,
+      category: input.category,
+      paidFrom: input.paidFrom,
+      note: input.note?.trim() || null,
+      createdAt: now,
+      userId: input.userId || null,
+    };
+    const summary = {
+      ...emptyDailySummary(),
+      ...(rootData.dailySummaries?.[dateKey] || {}),
+    };
+    summary.totalExpenses = roundCurrency(summary.totalExpenses + amount);
+    if (input.paidFrom === 'cashDrawer') {
+      summary.cashDrawerExpenses = roundCurrency(summary.cashDrawerExpenses + amount);
+    }
+    summary.physicalCashToTally = roundCurrency(summary.cashInflow - summary.cashDrawerExpenses);
+    summary.netProfit = roundCurrency(summary.totalSales - summary.totalExpenses);
+    summary.updatedAt = now;
+    rootData.expenses ??= {};
+    rootData.expenses[dateKey] ??= {};
+    rootData.expenses[dateKey][expenseId] = expense;
+    rootData.dailySummaries ??= {};
+    rootData.dailySummaries[dateKey] = summary;
+    savedExpense = expense;
+    return rootData;
+  });
+
+  if (!result.committed || !savedExpense) {
+    throw new Error('The expense could not be saved. Please try again.');
+  }
+  return savedExpense;
+}
+
+export async function voidSale(saleId: string, userId?: string | null, reason = 'Staff voided bill') {
+  if (!database) throw new Error('Database not initialized');
+  let failureReason = '';
+  let orderNumber = 0;
+  const result = await runTransaction(ref(database), (rootData) => {
+    const sale = rootData?.sales?.[saleId] as SaleRecord | undefined;
+    if (!rootData || !sale) {
+      failureReason = 'This bill no longer exists.';
+      return undefined;
+    }
+    if (sale.status === 'VOIDED') {
+      failureReason = `Bill #${sale.orderNumber} has already been voided.`;
+      return undefined;
+    }
+
+    const items = Array.isArray(sale.items) ? sale.items : [];
+    for (const item of items) {
+      if (!item.trackStock) continue;
+      const inventoryKey = item.inventoryKey || (item.tierId ? `${item.itemId}__${item.tierId}` : item.itemId);
+      const stock = rootData.shelfInventory?.[inventoryKey];
+      if (!stock || typeof stock.availableQuantity !== 'number') {
+        failureReason = `Cannot restore stock for ${item.name}. Its inventory record is missing.`;
+        return undefined;
+      }
+    }
+
+    for (const item of items) {
+      if (!item.trackStock) continue;
+      const inventoryKey = item.inventoryKey || (item.tierId ? `${item.itemId}__${item.tierId}` : item.itemId);
+      const stock = rootData.shelfInventory[inventoryKey];
+      stock.availableQuantity += item.quantity;
+      stock.updatedAt = Date.now();
+    }
+
+    const dateKey = sale.dateKey || getDateKey(new Date(sale.createdAt));
+    const summary = {
+      ...emptyDailySummary(),
+      ...(rootData.dailySummaries?.[dateKey] || {}),
+    };
+    summary.totalSales = roundCurrency(Math.max(0, summary.totalSales - sale.total));
+    summary.orderCount = Math.max(0, summary.orderCount - 1);
+    if (sale.paymentMethod === 'cash') {
+      summary.cashInflow = roundCurrency(Math.max(0, summary.cashInflow - sale.total));
+    } else {
+      summary.digitalInflow = roundCurrency(Math.max(0, summary.digitalInflow - sale.total));
+    }
+    summary.physicalCashToTally = roundCurrency(summary.cashInflow - summary.cashDrawerExpenses);
+    summary.netProfit = roundCurrency(summary.totalSales - summary.totalExpenses);
+    summary.updatedAt = Date.now();
+    rootData.dailySummaries ??= {};
+    rootData.dailySummaries[dateKey] = summary;
+
+    const now = Date.now();
+    rootData.sales[saleId] = {
+      ...sale,
+      status: 'VOIDED',
+      voidedAt: now,
+      voidedBy: userId || null,
+      voidReason: reason.trim() || 'Staff voided bill',
+    };
+    orderNumber = sale.orderNumber;
+    return rootData;
+  });
+
+  if (!result.committed) {
+    throw new Error(failureReason || 'The bill could not be voided. Please refresh and try again.');
+  }
+  return { orderNumber };
 }
 
 export async function updateInventory(inventoryKey: string, quantity: number, lowStockLevel: number) {

@@ -1,0 +1,50 @@
+PHASE 4 IMPLEMENTATION: Live Daily Dashboard, Expense Tracking, and Audit-Safe Bill Cancellations
+
+Implement Phase 4 for the Bakery POS dashboard (/dashboard). Transform the Overview page into a high-performance daily financial control room with a dedicated daily summary path, quick expense logging, and audit-safe bill cancellations:
+
+1. Lightweight Daily Summary Architecture (Firebase RTDB):
+- To prevent heavy client-side querying during operational hours, maintain an isolated daily summary node at:
+  `/dailySummaries/{YYYY-MM-DD}`
+- Track the following real-time aggregated metrics:
+  - totalSales (Gross NPR)
+  - orderCount (Total valid settled orders)
+  - cashInflow (NPR collected via Cash)
+  - digitalInflow (NPR collected via QR Standee)
+  - totalExpenses (Total shop expenses today)
+  - cashDrawerExpenses (Expenses paid out of the register cash drawer)
+  - physicalCashToTally (Calculated: cashInflow - cashDrawerExpenses)
+  - netProfit (Calculated: totalSales - totalExpenses)
+- Hook checkout from Phase 3 to atomically increment this summary alongside individual sale records.
+
+2. Overview Dashboard KPI Grid (/dashboard):
+Redesign the top metrics section with 5 high-density, executive KPI cards (#14161B obsidian surfaces with amber rim accents):
+  1. "Today's Sales": Gross NPR in bold tabular font + settled bill count.
+  2. "Physical Cash to Tally": Exact cash that must be in the physical counter drawer at close (Cash Inflow minus Drawer Expenses).
+  3. "Digital / QR Inflow": NPR collected via counter standee.
+  4. "Daily Expenses": Total outflow spent today + quick "+ Add Expense" button.
+  5. "Net Profit": Real-time net margin (Sales minus Expenses) with green/amber status.
+
+3. Quick "+ Add Expense" Tool:
+- Place a prominent "+ Add Expense" action button on the Overview toolbar and directly inside the Daily Expenses KPI card.
+- Modal inputs:
+  - Amount (NPR): Numeric input (autofocused).
+  - Quick Category Chips: [ Dairy / Milk ], [ Packaging / Boxes ], [ Kitchen / Ingredients ], [ Utilities ], [ Other ].
+  - "Paid From" Toggle: [ Cash Drawer ] vs. [ Bank / Personal Account ].
+  - Short Note (Optional): e.g., "5L fresh milk delivery".
+- On submission:
+  - Append to `/expenses/{YYYY-MM-DD}/{expenseId}` with timestamp and staff UID.
+  - Atomically update `/dailySummaries/{YYYY-MM-DD}`: increase `totalExpenses` and, if paid from drawer, increase `cashDrawerExpenses` to keep the physical cash tally exact.
+
+4. Recent Bills & Audit-Safe Cancellation Flow:
+- In the lower section of /dashboard, display a clean "Today's Bills" table listing today's transactions in reverse chronological order:
+  - Columns: [ Bill # ] | [ Time ] | [ Items Summary ] | [ Tender Mode ] | [ Total NPR ] | [ Status ] | [ Actions ]
+- Void / Cancellation Action:
+  - Next to active bills, provide a discreet [ Void Bill ] action requiring confirmation ("Void Bill #[number]? Stock will be returned to shelf.").
+  - Audit-Safe Rules:
+    - Never hard-delete the sale record. Mark its status as "VOIDED" with a cancellation timestamp and reason.
+    - Automatic Stock Reversal: Run an atomic Firebase transaction returning the exact sold quantities and weight tiers back to `/shelfInventory`.
+    - Financial Adjustment: Decrement the voided bill's amount from `/dailySummaries/{YYYY-MM-DD}` (adjusting totalSales, cashInflow or digitalInflow, and orderCount).
+
+5. Real-Time Responsiveness:
+- Bind all overview figures to Firebase listeners so any checkout on the register or expense logged instantly reflects on the dashboard without manual page refreshes.
+- Ensure the overview table and cards support smooth two-finger touchpad scrolling on laptops and touch dragging on mobile devices.
