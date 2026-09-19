@@ -139,7 +139,7 @@ export default function InventoryWorkspace() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0E0F12]">
+    <div className="min-h-full bg-[#0E0F12]">
       <main className="mx-auto w-full max-w-6xl px-4 py-5 md:px-8 md:py-8">
         <header className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>

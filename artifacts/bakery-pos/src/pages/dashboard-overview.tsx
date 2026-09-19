@@ -59,7 +59,7 @@ export default function DashboardOverview() {
             <Loader2 className="h-8 w-8 animate-spin text-[#FF6D00]" />
           </div>
         ) : (
-          <div className="h-full overflow-y-auto bg-[#0E0F12]">
+          <div className="min-h-full bg-[#0E0F12]">
             <main className="mx-auto w-full max-w-6xl px-4 py-5 md:px-8 md:py-8">
               <header className="mb-7">
                 <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Daily control room</p>

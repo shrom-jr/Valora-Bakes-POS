@@ -3,6 +3,25 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
+.dashboard-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 109, 0, 0.7) rgba(20, 22, 27, 0.9);
+}
+
+.dashboard-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-track {
+  background: rgba(20, 22, 27, 0.9);
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-thumb {
+  border: 3px solid rgba(20, 22, 27, 0.9);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffd54f, #ff6d00, #f4511e);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

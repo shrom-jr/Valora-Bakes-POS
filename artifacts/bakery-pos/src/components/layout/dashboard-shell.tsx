@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Boxes, LayoutDashboard, Menu as MenuIcon, PackageSearch, Tag, X } from 'lucide-react';
+import { Boxes, LayoutDashboard, Menu as MenuIcon, UtensilsCrossed, X } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/menu', label: 'Menu & Prices', icon: Tag },
-  { href: '/dashboard/inventory', label: 'Shelf Inventory', icon: PackageSearch },
+  { href: '/dashboard/menu', label: 'Menu Management', icon: UtensilsCrossed },
+  { href: '/dashboard/inventory', label: 'Inventory', icon: Boxes },
 ];
 
 function NavigationLinks({ onNavigate }: { onNavigate?: () => void }) {
@@ -43,7 +43,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden bg-[#0E0F12]">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 flex-1 overflow-hidden bg-[#0E0F12]">
       <aside className="hidden w-64 shrink-0 border-r border-[#FF6D00]/25 bg-[#0E0F12] md:flex md:flex-col">
         <div className="border-b border-[#FF6D00]/15 px-5 py-6">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8]">
@@ -77,7 +77,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <MenuIcon className="h-5 w-5" />
           </Button>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+        <div className="dashboard-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-16">{children}</div>
       </div>
 
       {mobileOpen && (

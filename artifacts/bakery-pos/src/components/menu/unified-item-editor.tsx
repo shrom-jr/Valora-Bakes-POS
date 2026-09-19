@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { createMenuItem, updateMenuItem, Category, MenuItem, ShelfInventory } from '@/lib/rtdb';
+import { createMenuItem, updateMenuItem, Category, MenuItem } from '@/lib/rtdb';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 
 interface TierState {
@@ -14,8 +14,6 @@ interface TierState {
   label: string;
   weightLb: string;
   price: string;
-  initialStock: string;
-  restock: string;
   isCustom: boolean;
   isNew: boolean;
 }
@@ -25,22 +23,18 @@ interface Props {
   onClose: () => void;
   existingItem: MenuItem | null;
   categories: Category[];
-  inventory: Record<string, ShelfInventory>;
   defaultCategoryId?: string;
 }
 
 const PRESETS = ['0.5', '1', '2', '3'];
 
-export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categories, inventory, defaultCategoryId }: Props) {
+export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categories, defaultCategoryId }: Props) {
   const { toast } = useToast();
   
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [pricingMode, setPricingMode] = useState<'piece' | 'weight'>('piece');
   const [unitPrice, setUnitPrice] = useState('');
-  const [initialPieceStock, setInitialPieceStock] = useState('');
-  const [restockPiece, setRestockPiece] = useState('');
-  const [lowStockLevel, setLowStockLevel] = useState('5');
   const [trackStock, setTrackStock] = useState(true);
   const [active, setActive] = useState(true);
   
@@ -55,18 +49,8 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
       setUnitPrice(existingItem.unitPrice?.toString() || '');
       setTrackStock(existingItem.trackStock);
       setActive(existingItem.active);
-      setRestockPiece('');
-      setInitialPieceStock('');
-      
-      const invEntry = inventory[existingItem.id];
-      if (invEntry) {
-        setLowStockLevel(invEntry.lowStockLevel.toString());
-      }
-      
-       if (existingItem.pricingMode === 'weight' && existingItem.tiers) {
+      if (existingItem.pricingMode === 'weight' && existingItem.tiers) {
          const tierEntries = Object.entries(existingItem.tiers);
-         const firstTierInventory = tierEntries[0] && inventory[`${existingItem.id}__${tierEntries[0][0]}`];
-         if (firstTierInventory) setLowStockLevel(firstTierInventory.lowStockLevel.toString());
          setTiers(tierEntries.map(([id, t]) => {
           const isPreset = t.weightLb !== null && PRESETS.includes(t.weightLb.toString());
           return {
@@ -74,8 +58,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
             label: t.label,
             weightLb: t.weightLb?.toString() || '',
             price: t.price.toString(),
-            initialStock: '',
-            restock: '',
             isCustom: !isPreset,
             isNew: false
           };
@@ -88,9 +70,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
        setCategoryId(defaultCategoryId || categories[0]?.id || '');
       setPricingMode('piece');
       setUnitPrice('');
-      setInitialPieceStock('');
-      setRestockPiece('');
-      setLowStockLevel('5');
       setTrackStock(true);
       setActive(true);
       setTiers([]);
@@ -107,8 +86,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
         label: `${weight} lb`,
         weightLb: weight,
         price: '',
-        initialStock: '',
-        restock: '',
         isCustom: false,
         isNew: true
       }]);
@@ -121,8 +98,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
       label: '', 
       weightLb: '', 
       price: '', 
-      initialStock: '', 
-      restock: '',
       isCustom: true,
       isNew: true
     }]);
@@ -138,12 +113,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
       return;
     }
 
-    const parsedLowStock = parseInt(lowStockLevel);
-    if (isNaN(parsedLowStock) || parsedLowStock < 0) {
-      toast({ title: 'Validation', description: 'Low stock level must be a nonnegative integer', variant: 'destructive' });
-      return;
-    }
-
     let parsedUnitPrice: number | null = null;
     let finalTiers: Record<string, { label: string; weightLb: number | null; price: number }> | null = null;
     const initialInventory: Record<string, number> = {};
@@ -155,12 +124,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
         return;
       }
       
-      const parsedPieceStock = initialPieceStock === '' ? 0 : parseInt(initialPieceStock);
-      if (!existingItem && (isNaN(parsedPieceStock) || parsedPieceStock < 0)) {
-        toast({ title: 'Validation', description: 'Initial stock must be a nonnegative integer', variant: 'destructive' });
-        return;
-      }
-      initialInventory['piece'] = parsedPieceStock;
+      initialInventory['piece'] = 0;
     } else {
       if (tiers.length === 0) {
         toast({ title: 'Validation', description: 'At least one tier required for weight items', variant: 'destructive' });
@@ -179,21 +143,12 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
         }
         
         const isNewTier = t.isNew;
-        let tStock = 0;
-        if (isNewTier) {
-          tStock = t.initialStock === '' ? 0 : parseInt(t.initialStock);
-          if (isNaN(tStock) || tStock < 0) {
-            toast({ title: 'Validation', description: 'Initial stock for new tiers must be a nonnegative integer', variant: 'destructive' });
-            return;
-          }
-        }
-        
         finalTiers[t.id] = {
           label: t.label,
           weightLb: t.weightLb ? parseFloat(t.weightLb) : null,
           price: tPrice
         };
-        initialInventory[t.id] = tStock;
+        initialInventory[t.id] = 0;
       }
     }
 
@@ -203,8 +158,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
         const inventoryOps = {
           removeKeys: [] as string[],
           addKeys: {} as Record<string, { tierId: string | null; qty: number; lowStockLevel: number }>,
-          updateKeys: {} as Record<string, { lowStockLevel: number }>,
-          restockKeys: {} as Record<string, { amount: number; lowStockLevel: number }>
+          updateKeys: {} as Record<string, { lowStockLevel: number }>
         };
 
         if (existingItem.pricingMode === 'piece' && pricingMode === 'weight') {
@@ -213,7 +167,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
             inventoryOps.addKeys[`${existingItem.id}__${tierId}`] = {
               tierId,
               qty: initialInventory[tierId],
-              lowStockLevel: parsedLowStock
+              lowStockLevel: 5
             };
           });
         } else if (existingItem.pricingMode === 'weight' && pricingMode === 'piece') {
@@ -223,7 +177,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
           inventoryOps.addKeys[`${existingItem.id}`] = {
             tierId: null,
             qty: initialInventory['piece'] || 0,
-            lowStockLevel: parsedLowStock
+              lowStockLevel: 5
           };
         } else if (pricingMode === 'weight') {
           const oldTiers = Object.keys(existingItem.tiers || {});
@@ -240,42 +194,10 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
               inventoryOps.addKeys[`${existingItem.id}__${tierId}`] = {
                 tierId,
                 qty: initialInventory[tierId],
-                lowStockLevel: parsedLowStock
+            lowStockLevel: 5
               };
             }
           });
-        }
-
-        if (trackStock) {
-          if (pricingMode === 'piece' && existingItem.pricingMode === 'piece') {
-            inventoryOps.updateKeys[existingItem.id] = { lowStockLevel: parsedLowStock };
-            if (restockPiece.trim()) {
-              const amount = Number(restockPiece);
-              if (!Number.isInteger(amount) || amount < 0) {
-                toast({ title: 'Validation', description: 'Restock amount must be a nonnegative integer', variant: 'destructive' });
-                return;
-              }
-              if (amount > 0) {
-                inventoryOps.restockKeys[existingItem.id] = { amount, lowStockLevel: parsedLowStock };
-              }
-            }
-          } else if (pricingMode === 'weight' && existingItem.pricingMode === 'weight') {
-            for (const tier of tiers) {
-              if (tier.isNew) continue;
-              const inventoryKey = `${existingItem.id}__${tier.id}`;
-              inventoryOps.updateKeys[inventoryKey] = { lowStockLevel: parsedLowStock };
-              if (tier.restock.trim()) {
-                const amount = Number(tier.restock);
-                if (!Number.isInteger(amount) || amount < 0) {
-                  toast({ title: 'Validation', description: 'Restock amount must be a nonnegative integer', variant: 'destructive' });
-                  return;
-                }
-                if (amount > 0) {
-                  inventoryOps.restockKeys[inventoryKey] = { amount, lowStockLevel: parsedLowStock };
-                }
-              }
-            }
-          }
         }
 
         await updateMenuItem(existingItem.id, {
@@ -298,7 +220,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
           tiers: finalTiers,
           trackStock,
           active
-        }, initialInventory, parsedLowStock);
+        }, initialInventory, 5);
         toast({ title: 'Item created' });
       }
       onClose();
@@ -363,29 +285,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
                 <Label className="text-[#E2E8F0]">Price (NPR)</Label>
                 <Input type="number" step="0.01" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} disabled={isSaving} className="bg-[#14161B] border-[#FF6D00]/20 font-mono" />
               </div>
-              {trackStock && (
-                <div className="space-y-2">
-                  <Label className="text-[#E2E8F0]">
-                    {(!existingItem || existingItem.pricingMode !== 'piece') ? 'Initial Stock' : 'Restock (+)'}
-                  </Label>
-                  <Input 
-                    type="number" 
-                    value={(!existingItem || existingItem.pricingMode !== 'piece') ? initialPieceStock : restockPiece} 
-                    onChange={e => {
-                      if (!existingItem || existingItem.pricingMode !== 'piece') setInitialPieceStock(e.target.value);
-                      else setRestockPiece(e.target.value);
-                    }} 
-                    disabled={isSaving}
-                    className="bg-[#14161B] border-[#FF6D00]/20 font-mono" 
-                    placeholder={(!existingItem || existingItem.pricingMode !== 'piece') ? "0" : "Add..."}
-                  />
-                  {existingItem && existingItem.pricingMode === 'piece' && (
-                    <div className="text-[10px] text-[#FFB300] mt-1 text-right">
-                      Current Stock: {inventory[existingItem.id]?.availableQuantity || 0}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           ) : (
             <div className="space-y-4 bg-[#0E0F12] p-4 rounded-xl border border-[#FF6D00]/10">
@@ -428,26 +327,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
                           <Input type="number" value={t.price} onChange={e => handleTierChange(t.id, 'price', e.target.value)} disabled={isSaving} className="h-8 bg-[#0E0F12] text-sm font-mono border-[#2A2D35]" />
                         </div>
                         
-                        {trackStock && (
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-[#94A3B8] uppercase">
-                              {t.isNew ? 'Initial Stock' : 'Restock (+)'}
-                            </Label>
-                            <Input 
-                              type="number" 
-                              value={t.isNew ? t.initialStock : t.restock} 
-                              onChange={e => handleTierChange(t.id, t.isNew ? 'initialStock' : 'restock', e.target.value)} 
-                              disabled={isSaving}
-                              className="h-8 bg-[#0E0F12] text-sm font-mono border-[#2A2D35]" 
-                              placeholder={t.isNew ? "0" : "Add..."}
-                            />
-                            {!t.isNew && (
-                              <div className="text-[10px] text-[#FFB300] text-right mt-0.5">
-                                Current: {inventory[`${existingItem?.id}__${t.id}`]?.availableQuantity || 0}
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -470,13 +349,6 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
             </div>
           </div>
           
-          {trackStock && (
-            <div className="flex items-center justify-between bg-[#0E0F12] p-3 rounded-xl border border-[#FF6D00]/10">
-              <Label className="text-[#E2E8F0]">Low Stock Threshold</Label>
-              <Input type="number" value={lowStockLevel} onChange={e => setLowStockLevel(e.target.value)} disabled={isSaving} className="w-20 h-8 bg-[#14161B] border-[#FF6D00]/20 font-mono text-center text-sm" />
-            </div>
-          )}
-
         </div>
 
         <DialogFooter className="mt-2">

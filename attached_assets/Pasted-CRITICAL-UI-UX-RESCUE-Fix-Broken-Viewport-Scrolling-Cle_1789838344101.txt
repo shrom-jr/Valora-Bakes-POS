@@ -1,0 +1,37 @@
+CRITICAL UI/UX RESCUE: Fix Broken Viewport Scrolling, Clean Navigation Labels, and Strict Separation of Menu vs. Inventory
+
+The current dashboard layout suffers from rookie UI/UX defects: the overview content is clipped with no scrolling, the sidebar labels are wordy, and the Menu and Inventory pages redundantly duplicate the exact same restocking tasks. Fix these defects immediately:
+
+1. Fix Broken Scrolling Across the Entire Dashboard (/dashboard/*):
+- The dashboard viewport is currently clipped and unscrollable (e.g., bottom sections like "Shelf Readiness" are trapped off-screen).
+- Ensure the main content container has proper vertical scrolling: set the main viewport area to `h-[calc(100vh-theme(spacing.16))] overflow-y-auto` with clean custom scrollbars and adequate bottom padding (pb-16). The sidebar should remain fixed on the left while the content scrolls smoothly.
+
+2. Clean Sidebar Navigation Labels:
+- In the left sidebar, permanently rename the tabs to concise industry standards:
+  - "Overview" -> Keep as "Overview"
+  - "Menu & Prices" -> Rename strictly to "Menu Management" (icon: UtensilsCrossed or BookOpen)
+  - "Shelf Inventory" -> Rename strictly to "Inventory" (icon: Boxes or Package)
+
+3. Strict Functional Separation (Stop Duplicating Features):
+
+Page A: Menu Management (/dashboard/menu) — PURE CATALOG ONLY
+- This page is ONLY for creating and editing what the bakery sells.
+- REMOVE all restocking buttons, popovers, and stock increment chips from this screen.
+- Each product card must display:
+  - Item Title and Category badge.
+  - Pricing Mode (Per Piece or By Weight/Pound) and formatted NPR pricing (e.g., "From NPR 700.00" or single price).
+  - A clean "Active on POS" toggle switch.
+  - Edit & Delete buttons (or three-dots action menu).
+- Top Action: "+ Add Menu Item" opening the clean item creator modal.
+
+Page B: Inventory (/dashboard/inventory) — REAL-TIME SHELF STOCK & MORNING BAKE ONLY
+- This page is the rapid-fire stock updater for bakers and store managers.
+- Layout: Clean category filter bar followed by an organized, high-density table or card grid.
+- Each row/card displays:
+  - Item Name & Variant/Tier (e.g., "Black Forest — 1 lb").
+  - Current Available Stock count with a clear status indicator (Emerald = In Stock, Amber = Low Stock, Red = Sold Out).
+  - Rapid Morning Restock Controls: Direct [+1], [+5], [+10] one-tap chips and an inline number field to instantly add freshly baked batches to shelf stock.
+  - Atomic Firebase update: Tapping increments updates `shelfInventory` in Firebase Realtime Database instantly.
+
+4. Executive Design Consistency:
+Preserve the approved Firebase "Sunset Ember & Obsidian" aesthetic: deep obsidian backgrounds (#0E0F12, #14161B), razor-sharp solid white headings, bright off-white metadata (#E2E8F0), and glowing gold-to-orange gradient highlights on active sidebar tabs and action buttons.
