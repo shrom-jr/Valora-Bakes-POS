@@ -28,6 +28,11 @@
   print-color-adjust: exact;
 }
 
+.thermal-receipt-logo {
+  max-width: 100%;
+  height: auto;
+}
+
 @media print {
   @page {
     margin: 0;
@@ -59,6 +64,16 @@
     box-shadow: none !important;
     color: #000 !important;
     background: #fff !important;
+  }
+
+  .thermal-receipt-logo {
+    display: block !important;
+    width: 16mm !important;
+    max-width: calc(100% - 6mm) !important;
+    height: 16mm !important;
+    object-fit: contain !important;
+    margin: 0 auto 2mm !important;
+    filter: grayscale(100%) contrast(160%) !important;
   }
 
   .thermal-receipt-80mm {

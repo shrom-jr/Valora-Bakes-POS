@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Cloud, CloudOff, Store, LayoutDashboard, ShoppingCart } from 'lucide-react';
+import { LogOut, Cloud, CloudOff, LayoutDashboard, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { useLocation, Link } from 'wouter';
@@ -29,11 +29,11 @@ export default function CommandBar() {
   return (
     <header className="h-14 w-full bg-[#14161B] border-b border-[#FF6D00]/20 flex items-center justify-between px-4 sticky top-0 z-50 select-none shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15)]">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg relative p-[1px] bg-gradient-to-br from-[#FFD54F] to-[#F4511E] shadow-[0_0_10px_rgba(255,109,0,0.2)]">
-          <div className="w-full h-full bg-[#14161B] rounded-[7px] flex items-center justify-center">
-            <Store className="w-4 h-4 stroke-[url(#flame-grad)]" />
-          </div>
-        </div>
+        <img
+          src="/logo.png"
+          alt="Valora Bakes"
+          className="h-8 w-8 rounded-full object-contain bg-white/5 border border-amber-500/20"
+        />
         
         <span className="font-bold text-white tracking-wide">Bakery POS</span>
       </div>

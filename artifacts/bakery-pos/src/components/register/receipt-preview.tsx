@@ -49,6 +49,7 @@ export default function ReceiptPreview({ receipt, profile, width }: ReceiptPrevi
       aria-label={`Receipt preview for bill ${receipt.orderNumber}`}
     >
       <header className="text-center">
+        <img src="/logo.png" alt="Logo" className="mx-auto h-16 w-16 object-contain mb-2 print:filter-grayscale thermal-receipt-logo" />
         <h3 className={`${compact ? 'text-base' : 'text-lg'} font-bold tracking-tight`}>{profile.bakeryName}</h3>
         {profile.branchAddress && <p className="mt-1 whitespace-pre-wrap">{profile.branchAddress}</p>}
         {profile.phone && <p>{profile.phone}</p>}
