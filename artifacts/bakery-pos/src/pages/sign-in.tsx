@@ -198,7 +198,7 @@ export default function SignIn() {
                     <span>Authenticating...</span>
                   </div>
                 ) : (
-                  'Access Register'
+                  'Log In'
                 )}
               </Button>
             </form>
