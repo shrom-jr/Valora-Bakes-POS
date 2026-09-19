@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Boxes, LayoutDashboard, Menu as MenuIcon, UtensilsCrossed, X } from 'lucide-react';
+import { BarChart3, Boxes, LayoutDashboard, Menu as MenuIcon, Settings, UtensilsCrossed, X } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 
@@ -7,6 +7,8 @@ const navigation = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/menu', label: 'Menu Management', icon: UtensilsCrossed },
   { href: '/dashboard/inventory', label: 'Inventory', icon: Boxes },
+  { href: '/dashboard/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 function NavigationLinks({ onNavigate }: { onNavigate?: () => void }) {

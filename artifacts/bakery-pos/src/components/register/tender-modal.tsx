@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReceiptPreview, { ReceiptPayload } from '@/components/register/receipt-preview';
+import { ReceiptWidth, StoreProfile } from '@/lib/rtdb';
 
 type PaymentMethod = 'cash' | 'qr';
 
@@ -28,6 +30,10 @@ interface TenderModalProps {
   onConfirmQr: () => void;
   processing: boolean;
   errorMessage?: string;
+  completedReceipt?: ReceiptPayload | null;
+  storeProfile: StoreProfile;
+  receiptWidth: ReceiptWidth;
+  onDoneReceipt: () => void;
 }
 
 const formatNpr = (amount: number) => `NPR ${amount.toFixed(2)}`;
@@ -47,6 +53,10 @@ export default function TenderModal({
   onConfirmQr,
   processing,
   errorMessage,
+  completedReceipt,
+  storeProfile,
+  receiptWidth,
+  onDoneReceipt,
 }: TenderModalProps) {
   const cashInputRef = useRef<HTMLInputElement>(null);
   const canCompleteCash = total >= 0 && cashReceived >= total && !processing;
@@ -70,15 +80,45 @@ export default function TenderModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-1.5rem)] max-w-xl border-[#FF6D00]/25 bg-[#14161B] p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-6">
-        <DialogHeader className="pr-8">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-white">
-            <ReceiptText className="h-5 w-5 text-[#FFD54F]" />
-            Counter tender
-          </DialogTitle>
-          <DialogDescription className="text-[#94A3B8]">Confirm the payment method before completing this sale.</DialogDescription>
-        </DialogHeader>
+        {completedReceipt ? (
+          <>
+            <DialogHeader className="pr-8">
+              <DialogTitle className="flex items-center gap-2 text-xl font-bold text-white">
+                <ReceiptText className="h-5 w-5 text-[#FFD54F]" />
+                Receipt ready
+              </DialogTitle>
+              <DialogDescription className="text-[#94A3B8]">Print the customer receipt or move directly to the next order.</DialogDescription>
+            </DialogHeader>
+            <ReceiptPreview receipt={completedReceipt} profile={storeProfile} width={receiptWidth} />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.print()}
+                className="min-h-12 border-[#FFB300]/35 bg-[#FFB300]/10 font-bold text-[#FFD54F] hover:bg-[#FFB300]/20 hover:text-white"
+              >
+                Print Receipt
+              </Button>
+              <Button
+                type="button"
+                onClick={onDoneReceipt}
+                className="min-h-12 border-none bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] font-bold text-white hover:brightness-110"
+              >
+                Done / Next Order
+              </Button>
+            </div>
+          </>
+        ) : (
+        <>
+          <DialogHeader className="pr-8">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-white">
+              <ReceiptText className="h-5 w-5 text-[#FFD54F]" />
+              Counter tender
+            </DialogTitle>
+            <DialogDescription className="text-[#94A3B8]">Confirm the payment method before completing this sale.</DialogDescription>
+          </DialogHeader>
 
-        <Tabs value={paymentMethod} onValueChange={handleTabChange} className="mt-1">
+          <Tabs value={paymentMethod} onValueChange={handleTabChange} className="mt-1">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-[#2A2D35] bg-[#0E0F12] p-1">
             <TabsTrigger
               value="cash"
@@ -191,13 +231,15 @@ export default function TenderModal({
               {!processing && <CreditCard className="h-5 w-5" />}
             </Button>
           </TabsContent>
-        </Tabs>
+          </Tabs>
 
-        {errorMessage && (
-          <p role="alert" className="flex items-start gap-2 rounded-lg border border-[#F4511E]/25 bg-[#F4511E]/10 px-3 py-2 text-xs font-semibold leading-5 text-[#FFB39D]">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{errorMessage}</span>
-          </p>
+          {errorMessage && (
+            <p role="alert" className="flex items-start gap-2 rounded-lg border border-[#F4511E]/25 bg-[#F4511E]/10 px-3 py-2 text-xs font-semibold leading-5 text-[#FFB39D]">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </p>
+          )}
+        </>
         )}
       </DialogContent>
     </Dialog>

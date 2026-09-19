@@ -89,6 +89,26 @@ export interface DailySummary {
 
 export type ExpenseCategory = 'dairy' | 'packaging' | 'kitchen' | 'utilities' | 'other';
 export type ExpensePaidFrom = 'cashDrawer' | 'bankPersonal';
+export type ReceiptWidth = '80mm' | '58mm';
+
+export interface StoreProfile {
+  bakeryName: string;
+  branchAddress: string;
+  phone: string;
+  panVat: string;
+  greeting: string;
+  footer: string;
+}
+
+export interface StoreSettings {
+  profile: StoreProfile;
+  features: {
+    customerCredit: boolean;
+  };
+  receipt: {
+    width: ReceiptWidth;
+  };
+}
 
 export interface ExpenseRecord {
   id: string;
@@ -123,6 +143,22 @@ export interface CompleteSaleResult {
 }
 
 const roundCurrency = (amount: number) => Math.round((amount + Number.EPSILON) * 100) / 100;
+export const defaultStoreSettings: StoreSettings = {
+  profile: {
+    bakeryName: 'Valora Bakes',
+    branchAddress: '',
+    phone: '',
+    panVat: '',
+    greeting: 'Fresh Bakes Everyday',
+    footer: 'Thank you for your visit!',
+  },
+  features: {
+    customerCredit: false,
+  },
+  receipt: {
+    width: '80mm',
+  },
+};
 const emptyDailySummary = (): DailySummary => ({
   totalSales: 0,
   orderCount: 0,
@@ -140,6 +176,25 @@ export function getDateKey(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+export async function updateStoreProfile(data: Partial<StoreProfile>) {
+  if (!database) throw new Error('Database not initialized');
+  const updates: Record<string, string> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) updates[`settings/profile/${key}`] = value;
+  });
+  await update(ref(database), updates);
+}
+
+export async function updateCustomerCredit(enabled: boolean) {
+  if (!database) throw new Error('Database not initialized');
+  await update(ref(database), { 'settings/features/customerCredit': enabled });
+}
+
+export async function updateReceiptWidth(width: ReceiptWidth) {
+  if (!database) throw new Error('Database not initialized');
+  await update(ref(database), { 'settings/receipt/width': width });
 }
 
 // Write Helpers

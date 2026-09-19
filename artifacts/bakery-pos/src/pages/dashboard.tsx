@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { Clock, ArrowRight, Loader2, Store, Plus, Minus, X, FileText, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCategories, useMenuItems, useShelfInventory } from '@/hooks/use-rtdb';
+import { useCategories, useMenuItems, useShelfInventory, useStoreSettings } from '@/hooks/use-rtdb';
 import { useCart, CartItem } from '@/hooks/use-cart';
 import TierSelectorModal from '@/components/register/tier-selector-modal';
 import DiscountControl from '@/components/register/discount-control';
@@ -11,6 +11,7 @@ import { completeSale } from '@/lib/rtdb';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
+import { ReceiptPayload } from '@/components/register/receipt-preview';
 
 export default function Dashboard() {
   const [time, setTime] = useState(new Date());
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const { categories, loading: catLoading, error: catError } = useCategories();
   const { items, loading: itemsLoading, error: itemsError } = useMenuItems();
   const { inventory, loading: invLoading, error: invError } = useShelfInventory();
+  const { settings: storeSettings } = useStoreSettings();
   const { cart, addToCart, incrementQuantity, decrementQuantity, removeFromCart, clearCart, syncWithInventory } = useCart();
   const { toast } = useToast();
 
@@ -33,6 +35,7 @@ export default function Dashboard() {
   const [referenceId, setReferenceId] = useState('');
   const [processingSale, setProcessingSale] = useState(false);
   const [tenderError, setTenderError] = useState('');
+  const [completedReceipt, setCompletedReceipt] = useState<ReceiptPayload | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -143,7 +146,17 @@ export default function Dashboard() {
     setPaymentMethod('cash');
     setCashReceived(0);
     setReferenceId('');
+    setCompletedReceipt(null);
     setTenderOpen(true);
+  };
+
+  const handleDoneReceipt = () => {
+    setCompletedReceipt(null);
+    setTenderOpen(false);
+    clearCart();
+    handleRemoveDiscount();
+    setCashReceived(0);
+    setReferenceId('');
   };
 
   const handleCompleteSale = async (method: 'cash' | 'qr') => {
@@ -167,11 +180,24 @@ export default function Dashboard() {
         referenceId: method === 'qr' ? referenceId : undefined,
         userId: user?.uid || null,
       });
-      setTenderOpen(false);
-      clearCart();
-      handleRemoveDiscount();
-      setCashReceived(0);
-      setReferenceId('');
+      setCompletedReceipt({
+        orderNumber: result.orderNumber,
+        createdAt: Date.now(),
+        cashierName: user?.displayName || user?.email || 'Counter Staff',
+        items: cart.map((item) => ({
+          name: item.name,
+          tierLabel: item.tierLabel,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          lineTotal: item.unitPrice * item.quantity,
+        })),
+        subtotal,
+        discountAmount,
+        total: result.total,
+        paymentMethod: method,
+        cashReceived: method === 'cash' ? cashReceived : null,
+        changeDue: result.changeDue,
+      });
       toast({
         title: `Sale Completed — Order #${result.orderNumber}`,
         description: method === 'cash'
@@ -471,8 +497,12 @@ export default function Dashboard() {
         open={tenderOpen}
         onOpenChange={(open) => {
           if (!processingSale) {
-            setTenderOpen(open);
-            if (!open) setTenderError('');
+            if (!open && completedReceipt) {
+              handleDoneReceipt();
+            } else {
+              setTenderOpen(open);
+              if (!open) setTenderError('');
+            }
           }
         }}
         total={total}
@@ -490,6 +520,10 @@ export default function Dashboard() {
         onConfirmQr={() => void handleCompleteSale('qr')}
         processing={processingSale}
         errorMessage={tenderError}
+        completedReceipt={completedReceipt}
+        storeProfile={storeSettings.profile}
+        receiptWidth={storeSettings.receipt.width}
+        onDoneReceipt={handleDoneReceipt}
       />
     </AppShell>
   );

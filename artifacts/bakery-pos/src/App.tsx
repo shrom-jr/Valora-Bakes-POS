@@ -11,6 +11,8 @@ import Register from '@/pages/dashboard';
 import DashboardOverview from '@/pages/dashboard-overview';
 import Menu from '@/pages/menu';
 import Inventory from '@/pages/inventory';
+import Reports from '@/pages/reports';
+import SettingsPage from '@/pages/settings';
 
 import {
   Route,
@@ -45,6 +47,8 @@ function Router() {
           <Route path="/register" component={Register} />
           <Route path="/dashboard/menu" component={Menu} />
           <Route path="/dashboard/inventory" component={Inventory} />
+          <Route path="/dashboard/reports" component={Reports} />
+          <Route path="/dashboard/settings" component={SettingsPage} />
           <Route path="/dashboard" component={DashboardOverview} />
           <Route path="/menu" component={LegacyMenuRedirect} />
           <Route component={NotFound} />

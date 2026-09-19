@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ref, onValue } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { Category, DailySummary, getDateKey, MenuItem, SaleRecord, ShelfInventory } from '@/lib/rtdb';
+import { Category, DailySummary, defaultStoreSettings, getDateKey, MenuItem, SaleRecord, ShelfInventory, StoreSettings } from '@/lib/rtdb';
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -202,4 +202,129 @@ export function useTodaySales(dateKey = getDateKey()) {
   }, [dateKey]);
 
   return { sales, loading, error };
+}
+
+export function useAllSales() {
+  const [sales, setSales] = useState<Array<SaleRecord & { id: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!database) {
+      setLoading(false);
+      return;
+    }
+    const salesRef = ref(database, 'sales');
+    const unsubscribe = onValue(
+      salesRef,
+      (snapshot) => {
+        setError(null);
+        const value = snapshot.val();
+        const parsed = value
+          ? Object.entries(value)
+            .map(([id, data]) => ({ id, ...(data as SaleRecord) }))
+            .sort((a, b) => b.createdAt - a.createdAt)
+          : [];
+        setSales(parsed);
+        setLoading(false);
+      },
+      (err) => {
+        setError(err);
+        setLoading(false);
+      },
+    );
+    return unsubscribe;
+  }, []);
+
+  return { sales, loading, error };
+}
+
+export function useDailySummaries(startDateKey: string, endDateKey: string) {
+  const [summaries, setSummaries] = useState<Record<string, DailySummary>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!database) {
+      setLoading(false);
+      return;
+    }
+    const summariesRef = ref(database, 'dailySummaries');
+    const unsubscribe = onValue(
+      summariesRef,
+      (snapshot) => {
+        setError(null);
+        const value = snapshot.val() || {};
+        const parsed: Record<string, DailySummary> = {};
+        Object.entries(value).forEach(([dateKey, data]) => {
+          if (dateKey >= startDateKey && dateKey <= endDateKey) {
+            parsed[dateKey] = {
+              totalSales: Number((data as Partial<DailySummary>).totalSales) || 0,
+              orderCount: Number((data as Partial<DailySummary>).orderCount) || 0,
+              cashInflow: Number((data as Partial<DailySummary>).cashInflow) || 0,
+              digitalInflow: Number((data as Partial<DailySummary>).digitalInflow) || 0,
+              totalExpenses: Number((data as Partial<DailySummary>).totalExpenses) || 0,
+              cashDrawerExpenses: Number((data as Partial<DailySummary>).cashDrawerExpenses) || 0,
+              physicalCashToTally: Number((data as Partial<DailySummary>).physicalCashToTally) || 0,
+              netProfit: Number((data as Partial<DailySummary>).netProfit) || 0,
+              updatedAt: Number((data as Partial<DailySummary>).updatedAt) || 0,
+            };
+          }
+        });
+        setSummaries(parsed);
+        setLoading(false);
+      },
+      (err) => {
+        setError(err);
+        setLoading(false);
+      },
+    );
+    return unsubscribe;
+  }, [startDateKey, endDateKey]);
+
+  return { summaries, loading, error };
+}
+
+export function useStoreSettings() {
+  const [settings, setSettings] = useState<StoreSettings>(defaultStoreSettings);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!database) {
+      setLoading(false);
+      return;
+    }
+    const settingsRef = ref(database, 'settings');
+    const unsubscribe = onValue(
+      settingsRef,
+      (snapshot) => {
+        setError(null);
+        const value = snapshot.val() || {};
+        const profile = value.profile || {};
+        setSettings({
+          profile: {
+            ...defaultStoreSettings.profile,
+            ...profile,
+          },
+          features: {
+            ...defaultStoreSettings.features,
+            ...(value.features || {}),
+          },
+          receipt: {
+            ...defaultStoreSettings.receipt,
+            ...(value.receipt || {}),
+          },
+        });
+        setLoading(false);
+      },
+      (err) => {
+        setError(err);
+        setLoading(false);
+      },
+    );
+    return unsubscribe;
+  }, []);
+
+  return { settings, loading, error };
 }
