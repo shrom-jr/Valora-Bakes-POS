@@ -29,11 +29,13 @@ export default function CommandBar() {
   return (
     <header className="h-14 w-full bg-[#14161B] border-b border-[#FF6D00]/20 flex items-center justify-between px-4 sticky top-0 z-50 select-none shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15)]">
       <div className="flex items-center gap-3">
-        <img
-          src="/logo.png"
-          alt="Valora Bakes"
-          className="h-10 w-10 rounded-full object-cover bg-white shadow-md ring-1 ring-amber-500/40"
-        />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#14161B] border border-amber-500/30">
+          <img
+            src="/logo.png"
+            alt="Valora Bakes"
+            className="brand-logo-illuminated h-8 w-8 object-contain"
+          />
+        </div>
         
         <span className="font-bold text-white tracking-wide">Bakery POS</span>
       </div>

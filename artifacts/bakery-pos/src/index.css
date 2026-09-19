@@ -28,6 +28,10 @@
   print-color-adjust: exact;
 }
 
+.brand-logo-illuminated {
+  filter: brightness(1.7) contrast(1.1) drop-shadow(0 0 8px rgba(245, 158, 11, 0.35));
+}
+
 .thermal-receipt-logo {
   max-width: 100%;
   height: auto;
@@ -73,7 +77,7 @@
     height: 16mm !important;
     object-fit: contain !important;
     margin: 0 auto 2mm !important;
-    filter: grayscale(100%) contrast(160%) !important;
+    filter: grayscale(100%) contrast(200%) brightness(0.9) !important;
   }
 
   .thermal-receipt-80mm {
