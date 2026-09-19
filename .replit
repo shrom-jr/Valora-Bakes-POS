@@ -21,3 +21,14 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_FIREBASE_API_KEY = "AIzaSyDHeT647fTu4j1Gqip4OKbXXmGntxjX6r0"
+VITE_FIREBASE_AUTH_DOMAIN = "anish-valora.firebaseapp.com"
+VITE_FIREBASE_DATABASE_URL = "https://anish-valora-default-rtdb.asia-southeast1.firebasedatabase.app"
+VITE_FIREBASE_PROJECT_ID = "anish-valora"
+VITE_FIREBASE_STORAGE_BUCKET = "anish-valora.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "274481947786"
+VITE_FIREBASE_APP_ID = "1:274481947786:web:0389155bf449d4a8d73973"
