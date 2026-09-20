@@ -157,8 +157,8 @@ export default function SettingsPage() {
             <form onSubmit={saveProfile} className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5 md:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14161B] border border-amber-500/30">
-                    <img src="/logo.png?v=2" alt="Valora Bakes brand logo" className="h-9 w-9 object-contain" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-amber-500/30 bg-[#F7F0E3] p-1">
+                    <img src="/brand-mark.png?v=1" alt="Valora Bakes brand mark" className="h-10 w-10 object-contain" />
                   </div>
                   <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Business identity</p>

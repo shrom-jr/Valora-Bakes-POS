@@ -29,9 +29,9 @@ export default function CommandBar() {
   return (
     <header className="h-14 w-full bg-[#14161B] border-b border-[#FF6D00]/20 flex items-center justify-between px-4 sticky top-0 z-50 select-none shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15)]">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#14161B] border border-amber-500/30">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-500/30 bg-[#F7F0E3] p-1">
           <img
-            src="/logo.png?v=2"
+            src="/brand-mark.png?v=1"
             alt="Valora Bakes"
             className="h-8 w-8 object-contain"
           />
