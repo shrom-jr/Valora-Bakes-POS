@@ -40,7 +40,10 @@ export default function CommandBar() {
           />
         </div>
         
-        <span className="max-w-[220px] truncate font-bold tracking-wide text-white" title={businessName}>{businessName}</span>
+        <div className="min-w-0">
+          <div className="brand-business-name max-w-[220px] truncate text-sm leading-none text-white" title={businessName}>{businessName}</div>
+          <div className="brand-powered-by mt-1 text-[7px] leading-none text-[#FFD54F]">Powered by Shramik Rawal</div>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

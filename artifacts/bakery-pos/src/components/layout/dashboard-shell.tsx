@@ -57,9 +57,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         <div className="flex-1 px-3 py-5">
           <NavigationLinks />
         </div>
-        <div className="border-t border-[#FF6D00]/15 px-5 py-4 text-[11px] font-mono text-[#64748B]">
-          FIREBASE LIVE SYSTEM
-        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

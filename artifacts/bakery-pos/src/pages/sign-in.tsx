@@ -121,7 +121,8 @@ export default function SignIn() {
               <img src="/logo.png?v=2" alt="Valora Bakes" className="h-full w-full object-contain" />
             </div>
             <div className="text-center space-y-1.5">
-               <CardTitle className="text-2xl font-bold tracking-tight text-white">Valora Cakes &amp; Pastries</CardTitle>
+               <CardTitle className="brand-business-name text-2xl tracking-tight text-white">Valora Cakes &amp; Pastries</CardTitle>
+               <p className="brand-powered-by text-[#FFD54F]">Powered by Shramik Rawal</p>
               <CardDescription className="text-[#E2E8F0]">
                 Sign in to your register session
               </CardDescription>
