@@ -117,7 +117,7 @@ export default function SignIn() {
       <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-[#FFD54F] via-[#FF6D00] to-[#14161B] shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15),0_0_0_1px_rgba(255,140,0,0.25)] w-full max-w-sm z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
         <Card className="w-full h-full border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
           <CardHeader className="space-y-4 pb-6 pt-8">
-            <div className="relative mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-500/10 to-transparent p-2">
+            <div className="relative mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-2xl border border-amber-500/45 bg-[#F7F0E3] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.35),0_0_24px_rgba(245,158,11,0.16)]">
               <img src="/logo.png" alt="Valora Bakes" className="brand-logo-illuminated h-full w-full object-contain" />
             </div>
             <div className="text-center space-y-1.5">
