@@ -32,6 +32,10 @@
   filter: brightness(1.7) contrast(1.1) drop-shadow(0 0 8px rgba(245, 158, 11, 0.35));
 }
 
+.brand-logo-on-light {
+  filter: contrast(1.08) saturate(1.08) drop-shadow(0 3px 6px rgba(76, 48, 17, 0.2));
+}
+
 .thermal-receipt-logo {
   max-width: 100%;
   height: auto;

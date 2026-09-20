@@ -31,7 +31,7 @@ export default function CommandBar() {
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#14161B] border border-amber-500/30">
           <img
-            src="/logo.png"
+            src="/logo.png?v=2"
             alt="Valora Bakes"
             className="brand-logo-illuminated h-8 w-8 object-contain"
           />
