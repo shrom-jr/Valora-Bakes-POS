@@ -28,14 +28,6 @@
   print-color-adjust: exact;
 }
 
-.brand-logo-illuminated {
-  filter: brightness(1.7) contrast(1.1) drop-shadow(0 0 8px rgba(245, 158, 11, 0.35));
-}
-
-.brand-logo-gold {
-  filter: brightness(0) saturate(100%) invert(69%) sepia(54%) saturate(743%) hue-rotate(356deg) brightness(96%) contrast(94%) drop-shadow(0 0 8px rgba(245, 158, 11, 0.38));
-}
-
 .thermal-receipt-logo {
   max-width: 100%;
   height: auto;

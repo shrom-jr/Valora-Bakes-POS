@@ -118,7 +118,7 @@ export default function SignIn() {
         <Card className="w-full h-full border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
           <CardHeader className="space-y-4 pb-6 pt-8">
             <div className="relative mx-auto mb-4 flex h-36 w-36 items-center justify-center rounded-[2rem] border border-amber-500/30 bg-[radial-gradient(circle,rgba(255,179,0,0.14),rgba(20,22,27,0.2)_58%,transparent_74%)] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.35),0_0_28px_rgba(245,158,11,0.18)]">
-              <img src="/logo.png?v=2" alt="Valora Bakes" className="brand-logo-gold h-full w-full object-contain" />
+              <img src="/logo.png?v=2" alt="Valora Bakes" className="h-full w-full object-contain" />
             </div>
             <div className="text-center space-y-1.5">
               <CardTitle className="text-2xl font-bold tracking-tight text-white">Bakery POS</CardTitle>
