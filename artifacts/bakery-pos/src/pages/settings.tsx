@@ -158,7 +158,7 @@ export default function SettingsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14161B] border border-amber-500/30">
-                    <img src="/logo.png?v=2" alt="Valora Bakes brand logo" className="brand-logo-illuminated h-9 w-9 object-contain" />
+                    <img src="/logo.png?v=2" alt="Valora Bakes brand logo" className="brand-logo-gold h-9 w-9 object-contain" />
                   </div>
                   <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Business identity</p>

@@ -33,7 +33,7 @@ export default function CommandBar() {
           <img
             src="/logo.png?v=2"
             alt="Valora Bakes"
-            className="brand-logo-illuminated h-8 w-8 object-contain"
+            className="brand-logo-gold h-8 w-8 object-contain"
           />
         </div>
         
