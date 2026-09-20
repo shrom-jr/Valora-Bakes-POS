@@ -82,7 +82,7 @@ export default function SignIn() {
               </div>
               <CardTitle className="text-xl text-white">Configuration Required</CardTitle>
               <CardDescription className="text-[#E2E8F0] leading-relaxed">
-                Bakery POS cannot start because Firebase is not configured.
+                 Valora Cakes & Pastries cannot start because Firebase is not configured.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -121,7 +121,7 @@ export default function SignIn() {
               <img src="/logo.png?v=2" alt="Valora Bakes" className="h-full w-full object-contain" />
             </div>
             <div className="text-center space-y-1.5">
-              <CardTitle className="text-2xl font-bold tracking-tight text-white">Bakery POS</CardTitle>
+               <CardTitle className="text-2xl font-bold tracking-tight text-white">Valora Cakes &amp; Pastries</CardTitle>
               <CardDescription className="text-[#E2E8F0]">
                 Sign in to your register session
               </CardDescription>

@@ -34,7 +34,7 @@ export default function Boot() {
           </div>
         </div>
         <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-xl font-bold tracking-tight text-white">Bakery POS</h1>
+           <h1 className="text-xl font-bold tracking-tight text-white">Valora Cakes &amp; Pastries</h1>
           <div className="flex items-center gap-2 text-[#E2E8F0] text-sm font-mono">
             <Loader2 className="w-3.5 h-3.5 animate-spin stroke-[url(#flame-grad)]" />
             <span>Initializing system...</span>

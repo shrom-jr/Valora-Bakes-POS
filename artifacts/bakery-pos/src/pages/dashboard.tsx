@@ -250,7 +250,7 @@ export default function Dashboard() {
               <Store className="w-8 h-8 stroke-[url(#flame-grad)] opacity-90" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Welcome to Bakery POS</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Welcome to {storeSettings.profile.bakeryName}</h2>
           <p className="text-[#E2E8F0] max-w-md mx-auto leading-relaxed mb-8">
             Your catalog is currently empty. Head over to the Menu workspace to set up your first categories and items.
           </p>

@@ -3,9 +3,11 @@ import { LogOut, Cloud, CloudOff, LayoutDashboard, ShoppingCart } from 'lucide-r
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { useLocation, Link } from 'wouter';
+import { useStoreSettings } from '@/hooks/use-rtdb';
 
 export default function CommandBar() {
   const { signOut, user } = useAuth();
+  const { settings } = useStoreSettings();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [location] = useLocation();
 
@@ -25,6 +27,7 @@ export default function CommandBar() {
   const isDashboard = location.startsWith('/dashboard');
   const primaryHref = isDashboard ? '/register' : '/dashboard';
   const primaryLabel = isDashboard ? 'Counter Register' : 'Dashboard';
+  const businessName = settings.profile.bakeryName.trim() || 'Valora Cakes & Pastries';
 
   return (
     <header className="h-14 w-full bg-[#14161B] border-b border-[#FF6D00]/20 flex items-center justify-between px-4 sticky top-0 z-50 select-none shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15)]">
@@ -37,7 +40,7 @@ export default function CommandBar() {
           />
         </div>
         
-        <span className="font-bold text-white tracking-wide">Bakery POS</span>
+        <span className="max-w-[220px] truncate font-bold tracking-wide text-white" title={businessName}>{businessName}</span>
       </div>
 
       <div className="flex items-center gap-4">

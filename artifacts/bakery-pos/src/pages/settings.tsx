@@ -168,7 +168,7 @@ export default function SettingsPage() {
                 <Store className="h-5 w-5 text-[#FFD54F]" />
               </div>
               <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Bakery Name" value={profile.bakeryName} onChange={(value) => setProfile({ ...profile, bakeryName: value })} required />
+                <Field label="Business Name" value={profile.bakeryName} onChange={(value) => setProfile({ ...profile, bakeryName: value })} required />
                 <Field label="Branch / Address" value={profile.branchAddress} onChange={(value) => setProfile({ ...profile, branchAddress: value })} placeholder="Pepsicola, Kathmandu" />
                 <Field label="Contact Phone Number" value={profile.phone} onChange={(value) => setProfile({ ...profile, phone: value })} />
                 <Field label="PAN / VAT Registration Number" value={profile.panVat} onChange={(value) => setProfile({ ...profile, panVat: value })} />

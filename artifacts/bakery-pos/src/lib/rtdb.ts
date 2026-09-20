@@ -145,7 +145,7 @@ export interface CompleteSaleResult {
 const roundCurrency = (amount: number) => Math.round((amount + Number.EPSILON) * 100) / 100;
 export const defaultStoreSettings: StoreSettings = {
   profile: {
-    bakeryName: 'Valora Bakes',
+    bakeryName: 'Valora Cakes & Pastries',
     branchAddress: '',
     phone: '',
     panVat: '',
