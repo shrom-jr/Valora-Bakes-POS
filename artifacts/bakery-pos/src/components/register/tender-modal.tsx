@@ -79,7 +79,7 @@ export default function TenderModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1.5rem)] max-w-xl border-[#FF6D00]/25 bg-[#14161B] p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-6">
+      <DialogContent className={`w-[calc(100%-1.5rem)] max-w-xl border-[#FF6D00]/25 bg-[#14161B] p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:p-6 ${completedReceipt ? 'receipt-print-dialog' : ''}`}>
         {completedReceipt ? (
           <>
             <DialogHeader className="pr-8">

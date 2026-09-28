@@ -56,12 +56,12 @@ export default function ReceiptPreview({ receipt, profile, width }: ReceiptPrevi
         {profile.panVat && <p>PAN / VAT: {profile.panVat}</p>}
       </header>
 
-      <div className="my-3 border-y border-dashed border-black py-2 font-mono">
+      <div className="thermal-receipt-meta my-3 border-y border-dashed border-black py-2 font-mono">
         <div className="flex justify-between gap-3"><span>Bill #{receipt.orderNumber}</span><span>{receiptDate(receipt.createdAt)}</span></div>
         <div className="mt-1">Cashier: {receipt.cashierName}</div>
       </div>
 
-      <div className="font-mono">
+      <div className="thermal-receipt-items font-mono">
         <div
           className="grid gap-1 border-b border-black pb-1 font-bold"
           style={{ gridTemplateColumns: compact ? '2ch minmax(12ch, 1fr) 8ch' : '3ch minmax(20ch, 1fr) 8ch 9ch' }}
@@ -87,7 +87,7 @@ export default function ReceiptPreview({ receipt, profile, width }: ReceiptPrevi
         </div>
       </div>
 
-      <div className="mt-3 border-t border-black pt-2 font-mono">
+      <div className="thermal-receipt-totals mt-3 border-t border-black pt-2 font-mono">
         <div className="flex justify-between gap-3"><span>Subtotal</span><span>{formatNpr(receipt.subtotal)}</span></div>
         {receipt.discountAmount > 0 && <div className="mt-1 flex justify-between gap-3"><span>Discount</span><span>- {formatNpr(receipt.discountAmount)}</span></div>}
         <div className="mt-2 flex justify-between gap-3 text-sm font-bold"><span>Grand Total</span><span>{formatNpr(receipt.total)}</span></div>
