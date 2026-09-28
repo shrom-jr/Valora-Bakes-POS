@@ -421,13 +421,28 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
 
   let failureReason = '';
   const result = await runTransaction(ref(database), (rootData) => {
-    if (!rootData) {
-      failureReason = 'The live register data is unavailable. Please try again.';
-      return undefined;
-    }
+    failureReason = '';
+    const current: any = rootData && typeof rootData === 'object'
+      ? { ...rootData }
+      : {};
 
-    const menuItems = rootData.menuItems || {};
-    const shelfInventory = rootData.shelfInventory || {};
+    current.orderCounter = Number(current.orderCounter || 0);
+    current.sales = current.sales && typeof current.sales === 'object'
+      ? { ...current.sales }
+      : {};
+    current.dailySummaries = current.dailySummaries && typeof current.dailySummaries === 'object'
+      ? { ...current.dailySummaries }
+      : {};
+    current.shelfInventory = current.shelfInventory && typeof current.shelfInventory === 'object'
+      ? { ...current.shelfInventory }
+      : {};
+
+    // Firebase may first evaluate the transaction against an empty local cache.
+    // Return initialized data instead of aborting; when the server value arrives,
+    // Firebase retries this callback with the current database contents.
+    if (!rootData) return current;
+
+    const menuItems = current.menuItems || {};
     const saleItems: SaleRecordItem[] = [];
     let subtotal = 0;
 
@@ -466,13 +481,12 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
 
       if (menuItem.trackStock) {
         const inventoryKey = isPiece ? cartItem.itemId : `${cartItem.itemId}__${cartItem.tierId}`;
-        const stock = shelfInventory[inventoryKey];
-        if (!stock || typeof stock.availableQuantity !== 'number') {
-          failureReason = `${cartItem.name} is missing a live inventory record.`;
-          return undefined;
-        }
-        if (stock.availableQuantity < cartItem.quantity) {
-          failureReason = `Not enough stock for ${cartItem.name}${liveTier ? ` (${liveTier.label})` : ''}. Only ${stock.availableQuantity} remaining.`;
+        const stock = current.shelfInventory[inventoryKey];
+        const availableQuantity = typeof stock?.availableQuantity === 'number'
+          ? stock.availableQuantity
+          : 0;
+        if (availableQuantity < cartItem.quantity) {
+          failureReason = `Not enough stock for ${cartItem.name}${liveTier ? ` (${liveTier.label})` : ''}. Only ${availableQuantity} remaining.`;
           return undefined;
         }
       }
@@ -498,16 +512,20 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
       const inventoryKey = menuItem.pricingMode === 'piece'
         ? cartItem.itemId
         : `${cartItem.itemId}__${cartItem.tierId}`;
-      const stock = shelfInventory[inventoryKey];
-      stock.availableQuantity -= cartItem.quantity;
-      stock.updatedAt = Date.now();
+      const stock = current.shelfInventory[inventoryKey];
+      current.shelfInventory[inventoryKey] = {
+        ...stock,
+        availableQuantity: stock.availableQuantity - cartItem.quantity,
+        updatedAt: Date.now(),
+      };
     }
 
-    const orderNumber = Number(rootData.orderCounter || 0) + 1;
+    const orderNumber = current.orderCounter + 1;
+    current.orderCounter = orderNumber;
     const dateKey = getDateKey();
     const summary = {
       ...emptyDailySummary(),
-      ...(rootData.dailySummaries?.[dateKey] || {}),
+      ...(current.dailySummaries[dateKey] || {}),
     };
     summary.totalSales = roundCurrency(summary.totalSales + total);
     summary.orderCount += 1;
@@ -519,11 +537,8 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
     summary.physicalCashToTally = roundCurrency(summary.cashInflow - summary.cashDrawerExpenses);
     summary.netProfit = roundCurrency(summary.totalSales - summary.totalExpenses);
     summary.updatedAt = Date.now();
-    rootData.dailySummaries ??= {};
-    rootData.dailySummaries[dateKey] = summary;
-    rootData.orderCounter = orderNumber;
-    rootData.sales ??= {};
-    rootData.sales[saleId] = {
+    current.dailySummaries[dateKey] = summary;
+    current.sales[saleId] = {
       orderNumber,
       dateKey,
       items: saleItems,
@@ -541,7 +556,7 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
       status: 'COMPLETED',
     };
 
-    return rootData;
+    return current;
   });
 
   if (!result.committed) {
