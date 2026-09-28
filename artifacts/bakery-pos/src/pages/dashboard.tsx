@@ -1,17 +1,45 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { Clock, ArrowRight, Loader2, Store, Plus, Minus, X, FileText, AlertCircle, RefreshCw } from 'lucide-react';
+import { Clock, ArrowRight, Loader2, Store, Plus, Minus, X, FileText, AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCategories, useMenuItems, useShelfInventory, useStoreSettings } from '@/hooks/use-rtdb';
-import { useCart, CartItem } from '@/hooks/use-cart';
-import TierSelectorModal from '@/components/register/tier-selector-modal';
+import { useCart } from '@/hooks/use-cart';
 import DiscountControl from '@/components/register/discount-control';
 import TenderModal from '@/components/register/tender-modal';
 import { completeSale } from '@/lib/rtdb';
+import type { MenuItem, MenuItemTier } from '@/lib/rtdb';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { ReceiptPayload } from '@/components/register/receipt-preview';
+
+type RegisterMenuCard = {
+  item: MenuItem;
+  tierId: string | null;
+  tier: MenuItemTier | null;
+};
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function HighlightedText({ text, tokens }: { text: string; tokens: string[] }) {
+  const uniqueTokens = Array.from(new Set(tokens));
+  if (uniqueTokens.length === 0) return <>{text}</>;
+
+  const expression = new RegExp(`(${uniqueTokens.sort((a, b) => b.length - a.length).map(escapeRegExp).join('|')})`, 'gi');
+  const tokenSet = new Set(uniqueTokens.map((token) => token.toLowerCase()));
+
+  return (
+    <>
+      {text.split(expression).map((part, index) => (
+        tokenSet.has(part.toLowerCase())
+          ? <mark key={`${part}-${index}`} className="rounded bg-amber-500/25 px-0.5 font-semibold text-amber-300">{part}</mark>
+          : part
+      ))}
+    </>
+  );
+}
 
 export default function Dashboard() {
   const [time, setTime] = useState(new Date());
@@ -24,7 +52,8 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-  const [selectedItemForTier, setSelectedItemForTier] = useState<any | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountMode, setDiscountMode] = useState<'flat' | 'percentage'>('flat');
   const [discountInput, setDiscountInput] = useState('');
@@ -42,6 +71,36 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const handleRegisterShortcut = (event: KeyboardEvent) => {
+      if (tenderOpen) return;
+
+      if (event.key === '/') {
+        const target = event.target;
+        const isEditingText = target instanceof HTMLElement && (
+          target.isContentEditable ||
+          Boolean(target.closest('input, textarea, select, [role="textbox"]'))
+        );
+        if (isEditingText) return;
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      if (
+        event.key === 'Escape' &&
+        (document.activeElement === searchInputRef.current || searchQuery.length > 0)
+      ) {
+        event.preventDefault();
+        setSearchQuery('');
+        searchInputRef.current?.blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleRegisterShortcut);
+    return () => window.removeEventListener('keydown', handleRegisterShortcut);
+  }, [searchQuery, tenderOpen]);
+
   const handleClamp = useCallback((removedNames: string[]) => {
     toast({
       title: 'Cart Updated',
@@ -58,6 +117,14 @@ export default function Dashboard() {
   }, [inventory, itemsLoading, invLoading, items, syncWithInventory, handleClamp]);
 
   const activeCategories = useMemo(() => categories.filter(c => c.active), [categories]);
+  const categoryNames = useMemo(
+    () => new Map(categories.map((category) => [category.id, category.name])),
+    [categories],
+  );
+  const searchTokens = useMemo(
+    () => searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean),
+    [searchQuery],
+  );
   
   useEffect(() => {
     if (activeCategories.length > 0 && !activeCategoryId) {
@@ -67,47 +134,44 @@ export default function Dashboard() {
 
   const displayedItems = useMemo(() => {
     if (!activeCategoryId) return [];
-    const activeOnly = items.filter(i => i.active);
-    if (activeCategoryId === 'all') return activeOnly;
-    return activeOnly.filter(i => i.categoryId === activeCategoryId);
-  }, [items, activeCategoryId]);
+    return items.filter((item) => {
+      if (!item.active) return false;
+      if (activeCategoryId !== 'all' && item.categoryId !== activeCategoryId) return false;
+      const searchableText = `${item.name} ${categoryNames.get(item.categoryId) || ''}`.toLowerCase();
+      return searchTokens.every((token) => searchableText.includes(token));
+    });
+  }, [items, activeCategoryId, categoryNames, searchTokens]);
 
-  const handleTileClick = (item: any) => {
-    if (item.pricingMode === 'piece') {
-      const invKey = item.id;
-      const inv = inventory[invKey];
-      const maxQty = item.trackStock ? (inv?.availableQuantity || 0) : null;
-      if (item.trackStock && maxQty === 0) return; // Sold out
+  const menuCards = useMemo<RegisterMenuCard[]>(
+    () => displayedItems.flatMap<RegisterMenuCard>((item) => {
+      if (item.pricingMode === 'piece') {
+        return [{ item, tierId: null, tier: null }];
+      }
+      return Object.entries(item.tiers || {}).map(([tierId, tier]) => ({
+        item,
+        tierId,
+        tier,
+      }));
+    }),
+    [displayedItems],
+  );
 
-      addToCart({
-        itemId: item.id,
-        name: item.name,
-        tierId: null,
-        tierLabel: null,
-        unitPrice: item.unitPrice,
-        maxQuantity: maxQty,
-      });
-    } else {
-      setSelectedItemForTier(item);
-    }
-  };
-
-  const handleTierSelect = (tierId: string, tier: any) => {
-    const item = selectedItemForTier;
-    if (!item) return;
-    const invKey = `${item.id}__${tierId}`;
-    const inv = inventory[invKey];
-    const maxQty = item.trackStock ? (inv?.availableQuantity || 0) : null;
+  const handleTileClick = (item: MenuItem, tierId: string | null, tier: MenuItemTier | null) => {
+    if (item.pricingMode === 'weight' && (!tierId || !tier)) return;
+    const inventoryKey = item.pricingMode === 'piece' ? item.id : `${item.id}__${tierId}`;
+    const maxQuantity = item.trackStock
+      ? Math.max(0, inventory[inventoryKey]?.availableQuantity ?? 0)
+      : null;
+    if (maxQuantity === 0) return;
 
     addToCart({
       itemId: item.id,
       name: item.name,
       tierId,
-      tierLabel: tier.label,
-      unitPrice: tier.price,
-      maxQuantity: maxQty,
+      tierLabel: tier?.label ?? null,
+      unitPrice: item.pricingMode === 'piece' ? (item.unitPrice ?? 0) : tier!.price,
+      maxQuantity,
     });
-    setSelectedItemForTier(null);
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
@@ -270,6 +334,36 @@ export default function Dashboard() {
           {/* Subtle background texture */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,109,0,0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
           
+          {/* Fast menu search */}
+          <div className="relative z-10 shrink-0 px-4 pt-4">
+            <div className="flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-[#14161B] px-3.5 py-2.5 transition-colors focus-within:border-amber-500/50">
+              <Search className="h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search menu items (e.g. 'bl fo', 'croissant')..."
+                aria-label="Search menu items"
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-neutral-400 focus:outline-none"
+              />
+              {searchQuery.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    searchInputRef.current?.focus();
+                  }}
+                  aria-label="Clear menu search"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Category Ribbon */}
           <div className="p-4 border-b border-[#FF6D00]/10 flex gap-2 overflow-x-auto no-scrollbar touch-pan-x shrink-0">
             <button
@@ -300,61 +394,38 @@ export default function Dashboard() {
           {/* Grid */}
           <div className="flex-1 overflow-y-auto p-4 z-10 relative">
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-24">
-              {displayedItems.map(item => {
+              {menuCards.length === 0 ? (
+                <div className="col-span-full rounded-2xl border border-white/10 bg-[#14161B]/70 px-5 py-10 text-center text-sm text-[#94A3B8]">
+                  {searchTokens.length > 0 ? 'No menu items match your search.' : 'No products are available in this category.'}
+                </div>
+              ) : menuCards.map(({ item, tierId, tier }) => {
                 const isPiece = item.pricingMode === 'piece';
-                let minPrice = 0;
-                let stockStatus = 'Available';
+                const cartItemId = tierId ? `${item.id}__${tierId}` : item.id;
+                const inventoryKey = isPiece ? item.id : `${item.id}__${tierId}`;
+                const stock = inventory[inventoryKey];
+                const availableQuantity = stock?.availableQuantity ?? 0;
+                const isOutOfStock = item.trackStock && availableQuantity <= 0;
+                let stockStatus = 'Unlimited';
                 let stockClass = 'text-[#10B981] bg-[#10B981]/10';
-                let isOutOfStock = false;
-                
-                if (isPiece) {
-                  minPrice = item.unitPrice || 0;
-                  if (item.trackStock) {
-                    const currentQty = inventory[item.id]?.availableQuantity || 0;
-                    if (currentQty <= 0) {
-                      isOutOfStock = true;
-                      stockStatus = 'Sold Out';
-                      stockClass = 'text-destructive bg-destructive/10';
-                    } else if (currentQty <= (inventory[item.id]?.lowStockLevel || 5)) {
-                      stockStatus = `${currentQty} left`;
-                      stockClass = 'text-[#FFB300] bg-[#FFB300]/10';
-                    } else {
-                      stockStatus = `${currentQty} in stock`;
-                    }
+                if (item.trackStock) {
+                  if (isOutOfStock) {
+                    stockStatus = 'Sold Out';
+                    stockClass = 'text-destructive bg-destructive/10';
+                  } else if (availableQuantity <= (stock?.lowStockLevel ?? 5)) {
+                    stockStatus = `${availableQuantity} left`;
+                    stockClass = 'text-[#FFB300] bg-[#FFB300]/10';
                   } else {
-                    stockStatus = 'Unlimited';
-                  }
-                } else {
-                  if (item.tiers) {
-                    minPrice = Math.min(...Object.values(item.tiers).map((t: any) => t.price));
-                  }
-                  if (item.trackStock) {
-                    const allSoldOut = Object.keys(item.tiers || {}).every(tId => (inventory[`${item.id}__${tId}`]?.availableQuantity || 0) <= 0);
-                    if (allSoldOut && Object.keys(item.tiers || {}).length > 0) {
-                      isOutOfStock = true;
-                      stockStatus = 'Sold Out';
-                      stockClass = 'text-destructive bg-destructive/10';
-                    } else {
-                      stockStatus = 'Select Tier';
-                    }
-                  } else {
-                    stockStatus = 'Unlimited';
+                    stockStatus = `${availableQuantity} in stock`;
                   }
                 }
-
-                let cartQty = 0;
-                if (isPiece) {
-                  const cartItem = cart.find(c => c.cartItemId === item.id);
-                  if (cartItem) cartQty = cartItem.quantity;
-                } else {
-                  cartQty = cart.filter(c => c.itemId === item.id).reduce((acc, c) => acc + c.quantity, 0);
-                }
+                const cartQty = cart.find((cartItem) => cartItem.cartItemId === cartItemId)?.quantity ?? 0;
+                const unitPrice = isPiece ? (item.unitPrice ?? 0) : (tier?.price ?? 0);
 
                 return (
                   <button
-                    key={item.id}
+                    key={cartItemId}
                     disabled={isOutOfStock}
-                    onClick={() => handleTileClick(item)}
+                    onClick={() => handleTileClick(item, tierId, tier)}
                     className={`relative text-left h-[140px] rounded-2xl p-[1px] transition-all overflow-hidden ${
                       isOutOfStock 
                         ? 'bg-[#14161B] border border-[#2A2D35] opacity-60 cursor-not-allowed' 
@@ -362,9 +433,14 @@ export default function Dashboard() {
                     }`}
                   >
                     <div className="bg-[#14161B] rounded-[15px] h-full flex flex-col justify-between p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-                      <div className="font-bold text-white leading-tight pr-8">{item.name}</div>
+                      <div className="pr-8">
+                        <div className="font-bold leading-tight text-white">
+                          <HighlightedText text={item.name} tokens={searchTokens} />
+                        </div>
+                        {tier && <div className="mt-1 text-xs font-semibold text-[#FFD54F]">{tier.label}</div>}
+                      </div>
                       <div>
-                        <div className="font-mono text-[#E2E8F0] mb-2">{!isPiece && <span className="text-xs text-[#94A3B8] font-sans mr-1">from</span>}NPR {minPrice.toFixed(2)}</div>
+                        <div className="mb-2 font-mono text-[#E2E8F0]">NPR {unitPrice.toFixed(2)}</div>
                         <div className={`inline-block px-2 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold ${stockClass}`}>
                           {stockStatus}
                         </div>
@@ -486,13 +562,6 @@ export default function Dashboard() {
         
       </div>
       
-      <TierSelectorModal 
-        isOpen={!!selectedItemForTier} 
-        onClose={() => setSelectedItemForTier(null)} 
-        item={selectedItemForTier}
-        inventory={inventory}
-        onSelect={handleTierSelect}
-      />
       <TenderModal
         open={tenderOpen}
         onOpenChange={(open) => {

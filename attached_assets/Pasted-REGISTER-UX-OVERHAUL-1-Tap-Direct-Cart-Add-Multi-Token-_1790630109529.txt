@@ -1,0 +1,34 @@
+REGISTER UX OVERHAUL: 1-Tap Direct Cart Add & Multi-Token Search with Keyword Highlighting
+
+Refactor the Register screen (/register) to remove the multi-tier pop-up modal completely and implement high-speed menu search with live keyword highlighting:
+
+1. Remove Item Modal & Enable Instant 1-Tap Cart Add:
+- Eliminate the item/tier selection modal from the counter register flow.
+- Clicking any menu card must IMMEDIATELY add that item to the cart (1 tap = 1 item added):
+  - If the item is already in the cart, increment its quantity by 1.
+  - Retain the active orange quantity badge on the top-right corner of the card reflecting the cart count.
+  - If tracked inventory reaches 0, display a clean "Sold Out" badge, mute the card styling, and disable click events.
+- Each menu item in the grid represents a standalone product; do not intercept clicks with any dialogs or confirmation sheets.
+
+2. Fast Multi-Token Search Bar:
+- Place a sleek search bar directly above the category pills ("All Items", "Cakes", "Croissants"):
+  - Styling: Obsidian glass container (`bg-[#14161B] border border-white/10 focus-within:border-amber-500/50 rounded-xl px-3.5 py-2.5`).
+  - Search Icon: Clean magnifying glass on the left in `text-neutral-400`.
+  - Placeholder: "Search menu items (e.g. 'bl fo', 'croissant')...".
+  - Clear Button: Render an interactive `✕` button on the far right when text is present to instantly clear the search with one tap.
+  - Keyboard Focus: Pressing `/` anywhere on the register screen automatically focuses the search input. Pressing `Escape` clears and blurs it.
+- Search Filtering Logic:
+  - Multi-token matching: Split the search query by spaces into keywords (e.g., "bl fo" matches "Black Forest").
+  - The item matches if EVERY keyword token is found in the item's name or category.
+  - Works seamlessly with the category pills (filters within the selected category, or across all items if "All Items" is active).
+
+3. Live Amber Keyword Highlighting:
+- Create a safe text-highlighting component/helper for the item card titles:
+  - As the cashier types, highlight all matching letters/words in the item's title on the cards.
+  - Highlight styling: Luminous amber text with an amber backing chip:
+    `<mark className="bg-amber-500/25 text-amber-300 font-semibold rounded px-0.5">`
+  - Ensure safe regex escaping (e.g. escaping special characters) so rapid typing or punctuation never causes React runtime errors.
+
+4. Verification:
+- Run `npm run typecheck` and production build to confirm no type or bundling errors.
+- Verify the workflow restarts cleanly.
