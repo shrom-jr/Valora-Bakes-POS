@@ -118,7 +118,7 @@ export default function SignIn() {
         <Card className="w-full h-full border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
           <CardHeader className="space-y-4 pb-6 pt-8">
             <div className="mx-auto mb-4 flex h-36 w-36 items-center justify-center rounded-2xl bg-[#F7F0E3] p-2">
-              <img src="/logo.png?v=2" alt="Valora Bakes" className="h-full w-full object-contain" />
+              <img src="/logo.png?v=3" alt="Valora Bakes" className="h-full w-full object-contain" />
             </div>
             <div className="text-center space-y-1.5">
                <CardTitle className="brand-business-name text-2xl tracking-tight text-white">Valora Cakes &amp; Pastries</CardTitle>
