@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, Cloud, CloudOff, LayoutDashboard, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { Button } from '@/components/ui/button';
 import { useLocation, Link } from 'wouter';
 import { useStoreSettings } from '@/hooks/use-rtdb';
 
@@ -81,23 +80,23 @@ export default function CommandBar() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-[#FF6D00]/20 bg-[#0E0F12] py-1 pl-2 pr-1 sm:gap-3 sm:pl-3">
-          <div className="flex min-w-0 items-center gap-2" title={staffName}>
-            <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#FFB300]/25 bg-[#FF6D00]/10 text-[10px] font-bold tracking-wide text-[#FFD54F]">
+        <div className="flex items-center gap-2.5">
+          <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-amber-500/30 bg-[#1a1e27] px-3 py-1.5 shadow-sm" title={staffName}>
+            <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/20 text-xs font-bold text-amber-300">
               {staffInitials}
             </span>
-            <span className="max-w-[88px] truncate text-xs font-semibold text-[#E2E8F0] sm:max-w-[140px]">{staffName}</span>
+            <span className="max-w-[88px] truncate text-sm font-medium text-white sm:max-w-[140px]">{staffName}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            className="group h-8 w-8 rounded-full text-[#94A3B8] transition-all hover:bg-[#1A1D24] active:scale-95"
-            title="Sign out"
-            aria-label="Sign out"
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/20 hover:text-red-200"
+            title="Log Out"
+            aria-label="Log Out"
           >
-            <LogOut className="h-4 w-4 transition-all group-hover:stroke-[url(#flame-grad)]" />
-          </Button>
+            <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Log Out</span>
+          </button>
         </div>
       </div>
     </header>

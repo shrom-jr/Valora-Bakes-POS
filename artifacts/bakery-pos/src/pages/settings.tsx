@@ -297,7 +297,7 @@ export default function SettingsPage() {
               </div>
               <p className="mt-3 text-sm text-[#94A3B8]">Update the currently signed-in Firebase staff account. Leave both password fields blank to keep the password unchanged.</p>
               <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Name" value={accountName} onChange={setAccountName} placeholder="e.g. Store Manager, Front Counter" autoComplete="name" />
+                <Field label="Name" value={accountName} onChange={setAccountName} placeholder="Enter your name" autoComplete="name" />
                 <Field label="Email Address" value={accountEmail} onChange={setAccountEmail} type="email" placeholder="admin@valora.com" required autoComplete="email" />
                 <Field label="New Password" value={newPassword} onChange={setNewPassword} type="password" placeholder="Leave blank to keep unchanged" autoComplete="new-password" />
                 <Field label="Confirm New Password" value={confirmNewPassword} onChange={setConfirmNewPassword} type="password" placeholder="Leave blank to keep unchanged" autoComplete="new-password" />
