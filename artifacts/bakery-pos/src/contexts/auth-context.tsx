@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   isConfigured: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [, setUserRevision] = useState(0);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -41,8 +43,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = () => {
+    setUserRevision((revision) => revision + 1);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isConfigured: isFirebaseConfigured, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isConfigured: isFirebaseConfigured, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

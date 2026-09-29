@@ -42,6 +42,7 @@ function receiptDate(timestamp: number) {
 
 export default function ReceiptPreview({ receipt, profile, width }: ReceiptPreviewProps) {
   const compact = width === '58mm';
+  const cashierName = receipt.cashierName.trim() || 'Counter Staff';
   return (
     <div
       className={`thermal-receipt-print thermal-receipt-${width} mx-auto w-full max-w-[360px] rounded-lg bg-white p-4 text-black shadow-inner ${compact ? 'text-[11px]' : 'text-xs'}`}
@@ -58,7 +59,7 @@ export default function ReceiptPreview({ receipt, profile, width }: ReceiptPrevi
 
       <div className="thermal-receipt-meta my-3 border-y border-dashed border-black py-2 font-mono">
         <div className="flex justify-between gap-3"><span>Bill #{receipt.orderNumber}</span><span>{receiptDate(receipt.createdAt)}</span></div>
-        <div className="mt-1">Cashier: {receipt.cashierName}</div>
+        <div className="mt-1">Cashier: {cashierName}</div>
       </div>
 
       <div className="thermal-receipt-items font-mono">

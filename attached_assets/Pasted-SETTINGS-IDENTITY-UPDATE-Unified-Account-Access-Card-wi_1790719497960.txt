@@ -1,0 +1,43 @@
+SETTINGS & IDENTITY UPDATE: Unified Account & Access Card with Single Save Action
+
+Refactor the staff profile and security section in Store Settings (e.g. `src/pages/settings.tsx` or settings tab in `dashboard.tsx`) and update the top navbar and receipt cashier display:
+
+1. Replace Current Staff Access / Security UI:
+Replace the existing "Staff Access / Security & Password" box with a single, clean "Account & Access" card:
+- Card Title: "Account & Access"
+- Fields to render:
+  1. Name:
+     - Label: "Name"
+     - Value: Bound to Firebase auth user's `displayName` (fallback to current name or empty).
+     - Placeholder: "e.g. Store Manager, Front Counter"
+  2. Email Address:
+     - Label: "Email Address"
+     - Value: Pre-filled with current `auth.currentUser.email`.
+     - Placeholder: "admin@valora.com"
+  3. Password row (2 side-by-side columns):
+     - Field A: "New Password" (type="password", placeholder="Leave blank to keep unchanged")
+     - Field B: "Confirm New Password" (type="password", placeholder="Leave blank to keep unchanged")
+- Action Button:
+  - Single button at bottom right: "Save Changes" (`bg-orange-600 hover:bg-orange-500 text-white rounded-lg px-5 py-2.5 font-medium flex items-center gap-2`).
+
+2. Save Changes Handler:
+When clicking "Save Changes", execute the updates sequentially with clear visual toast/banner feedback:
+- Name: If changed, call `updateProfile(auth.currentUser, { displayName: newName })`. Also sync to RTDB `/settings/staffProfile/displayName` if settings are mirrored there.
+- Email: If changed and valid, call `updateEmail(auth.currentUser, newEmail)`. If Firebase returns `auth/requires-recent-login`, show a clear toast: "Please log in again to change email address."
+- Password: Only if `newPassword` is filled:
+  - Verify `newPassword === confirmPassword`. If they do not match, alert: "Passwords do not match."
+  - Verify length >= 6 characters.
+  - Call `updatePassword(auth.currentUser, newPassword)`. If `auth/requires-recent-login` occurs, alert accordingly.
+- Reset the password inputs upon successful save and show a success notification ("Account settings updated successfully").
+
+3. Update Header & Receipt Display:
+- Top Header Navbar:
+  - Replace the plain `demo` badge with a sleek user pill:
+    - Display the user's `displayName` (e.g. "Store Manager"). If `displayName` is not yet set, format the email prefix cleanly (e.g. "Valora Admin" or capitalized prefix) instead of raw lowercase `demo`.
+    - Show a subtle circular avatar chip beside the name with their initials (e.g. "SM").
+- Receipts:
+  - Ensure the printed receipt (`receipt-preview.tsx`) displays `Cashier: [DisplayName]` (falling back to email only if name is completely empty).
+
+4. Verification:
+- Run `npm run typecheck` and production build to verify no broken types or imports.
+- Confirm the Bakery POS workflow restarts cleanly.

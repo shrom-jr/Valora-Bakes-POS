@@ -1,3 +1,3 @@
 - [Bakery POS flame standard](bakery-pos-flame-standard.md) — Keep the UI high-chroma and incandescent; avoid muted amber, brown, blue-slate, and flat amber borders.
-- [Firebase staff trust boundary](firebase-staff-trust-boundary.md) — Phase 2 treats every authenticated Firebase account as trusted bakery staff; add roles before broader access.
+- [Firebase staff trust boundary](firebase-staff-trust-boundary.md) — Authenticated accounts are trusted staff; keep identity per-account in Firebase Auth and add roles before broader access.
 - [Realtime Database transaction null pass](firebase-transaction-null-pass.md) — A falsy local transaction snapshot should not immediately abort; return safe fallback data so the server value can be reconciled.

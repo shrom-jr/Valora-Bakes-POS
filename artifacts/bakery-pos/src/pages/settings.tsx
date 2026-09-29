@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, LockKeyhole, Printer, RefreshCw, Save, Settings as SettingsIcon, Store } from 'lucide-react';
-import { updatePassword } from 'firebase/auth';
+import { AlertCircle, LockKeyhole, Printer, RefreshCw, Save, Settings as SettingsIcon, Store } from 'lucide-react';
+import { updateEmail, updatePassword, updateProfile } from 'firebase/auth';
 import { AppShell } from '@/components/layout/app-shell';
 import DashboardShell from '@/components/layout/dashboard-shell';
 import { Button } from '@/components/ui/button';
@@ -22,21 +22,28 @@ const emptyProfile: StoreProfile = {
 };
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const { settings, loading, error } = useStoreSettings();
   const [profile, setProfile] = useState<StoreProfile>(emptyProfile);
   const [profileSaving, setProfileSaving] = useState(false);
   const [creditSaving, setCreditSaving] = useState(false);
   const [receiptSaving, setReceiptSaving] = useState(false);
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
+  const [accountName, setAccountName] = useState(user?.displayName || '');
+  const [accountEmail, setAccountEmail] = useState(user?.email || '');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountError, setAccountError] = useState('');
 
   useEffect(() => {
     setProfile(settings.profile);
   }, [settings.profile]);
+
+  useEffect(() => {
+    setAccountName(user?.displayName || '');
+    setAccountEmail(user?.email || '');
+  }, [user]);
 
   const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -84,34 +91,86 @@ export default function SettingsPage() {
     }
   };
 
-  const changePassword = async (event: React.FormEvent) => {
+  const saveAccount = async (event: React.FormEvent) => {
     event.preventDefault();
-    setPasswordError('');
-    if (password.length < 6) {
-      setPasswordError('Use at least 6 characters for the new password.');
+    setAccountError('');
+    const currentUser = auth?.currentUser;
+    const nextName = accountName.trim();
+    const nextEmail = accountEmail.trim();
+    const wantsPasswordChange = Boolean(newPassword || confirmNewPassword);
+
+    const showAccountError = (message: string) => {
+      setAccountError(message);
+      toast({ title: 'Account changes not saved', description: message, variant: 'destructive' });
+    };
+
+    if (!currentUser) {
+      showAccountError('No active Firebase staff session is available.');
       return;
     }
-    if (password !== passwordConfirm) {
-      setPasswordError('The password confirmation does not match.');
+    if (wantsPasswordChange && newPassword !== confirmNewPassword) {
+      showAccountError('Passwords do not match.');
       return;
     }
-    if (!auth || !user) {
-      setPasswordError('No active Firebase staff session is available.');
+    if (wantsPasswordChange && newPassword.length < 6) {
+      showAccountError('Password must be at least 6 characters.');
       return;
     }
-    setPasswordSaving(true);
+    if (!nextEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+      showAccountError('Enter a valid email address.');
+      return;
+    }
+
+    setAccountSaving(true);
+    let savedAnyChanges = false;
+    let currentOperation: 'name' | 'email' | 'password' = 'name';
     try {
-      await updatePassword(user, password);
-      setPassword('');
-      setPasswordConfirm('');
-      toast({ title: 'Password updated', description: 'Your Firebase staff password was changed successfully.' });
+      if (nextName !== (currentUser.displayName || '')) {
+        currentOperation = 'name';
+        await updateProfile(currentUser, { displayName: nextName });
+        setAccountName(nextName);
+        savedAnyChanges = true;
+      }
+
+      if (nextEmail !== (currentUser.email || '')) {
+        currentOperation = 'email';
+        await updateEmail(currentUser, nextEmail);
+        setAccountEmail(nextEmail);
+        savedAnyChanges = true;
+      }
+
+      if (newPassword) {
+        currentOperation = 'password';
+        await updatePassword(currentUser, newPassword);
+        savedAnyChanges = true;
+      }
+
+      refreshUser();
+      setAccountName(nextName);
+      setAccountEmail(nextEmail);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      toast({
+        title: 'Account settings updated successfully',
+        description: 'Your staff identity and access details are up to date.',
+      });
     } catch (err: any) {
+      if (savedAnyChanges) refreshUser();
       const message = err?.code === 'auth/requires-recent-login'
-        ? 'For security, sign in again before changing your password.'
-        : err?.message || 'Could not update the password.';
-      setPasswordError(message);
+        ? currentOperation === 'email'
+          ? 'Please log in again to change email address.'
+          : currentOperation === 'password'
+            ? 'Please log in again to change your password.'
+            : 'Please log in again before changing your account details.'
+        : err?.message || 'Could not update account settings.';
+      setAccountError(message);
+      toast({
+        title: savedAnyChanges ? 'Account update incomplete' : 'Account changes not saved',
+        description: message,
+        variant: 'destructive',
+      });
     } finally {
-      setPasswordSaving(false);
+      setAccountSaving(false);
     }
   };
 
@@ -228,24 +287,25 @@ export default function SettingsPage() {
               </article>
             </section>
 
-            <form onSubmit={changePassword} className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5 md:p-6">
+            <form onSubmit={saveAccount} className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5 md:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Staff access</p>
-                  <h2 className="mt-2 text-xl font-bold text-white">Security & Password</h2>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Staff identity and sign-in</p>
+                  <h2 className="mt-2 text-xl font-bold text-white">Account &amp; Access</h2>
                 </div>
-                <LockKeyhole className="h-5 w-5 text-[#FFD54F]" />
+                <LockKeyhole className="h-5 w-5 text-[#FFD54F]" aria-hidden="true" />
               </div>
-              <p className="mt-3 text-sm text-[#94A3B8]">Update the password for the currently signed-in Firebase staff account.</p>
+              <p className="mt-3 text-sm text-[#94A3B8]">Update the currently signed-in Firebase staff account. Leave both password fields blank to keep the password unchanged.</p>
               <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="New Password" value={password} onChange={setPassword} type="password" placeholder="At least 6 characters" />
-                <Field label="Confirm New Password" value={passwordConfirm} onChange={setPasswordConfirm} type="password" />
+                <Field label="Name" value={accountName} onChange={setAccountName} placeholder="e.g. Store Manager, Front Counter" autoComplete="name" />
+                <Field label="Email Address" value={accountEmail} onChange={setAccountEmail} type="email" placeholder="admin@valora.com" required autoComplete="email" />
+                <Field label="New Password" value={newPassword} onChange={setNewPassword} type="password" placeholder="Leave blank to keep unchanged" autoComplete="new-password" />
+                <Field label="Confirm New Password" value={confirmNewPassword} onChange={setConfirmNewPassword} type="password" placeholder="Leave blank to keep unchanged" autoComplete="new-password" />
               </div>
-              {passwordError && <p role="alert" className="mt-4 rounded-lg border border-[#F4511E]/25 bg-[#F4511E]/10 px-3 py-2 text-xs font-semibold text-[#FFB39D]">{passwordError}</p>}
-              <div className="mt-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-                <p className="text-xs text-[#64748B]">{user?.email || 'Authenticated staff account'}</p>
-                <Button type="submit" disabled={passwordSaving || !password || !passwordConfirm} variant="outline" className="border-[#FFB300]/35 bg-[#FFB300]/10 font-bold text-[#FFD54F] hover:bg-[#FFB300]/20 hover:text-white">
-                  <LockKeyhole className="mr-2 h-4 w-4" /> {passwordSaving ? 'Updating…' : 'Update Password'}
+              {accountError && <p role="alert" className="mt-4 rounded-lg border border-[#F4511E]/25 bg-[#F4511E]/10 px-3 py-2 text-xs font-semibold text-[#FFB39D]">{accountError}</p>}
+              <div className="mt-5 flex justify-end">
+                <Button type="submit" disabled={accountSaving} className="flex h-auto items-center gap-2 rounded-lg bg-orange-600 px-5 py-2.5 font-medium text-white hover:bg-orange-500">
+                  <Save className="h-4 w-4" /> {accountSaving ? 'Saving…' : 'Save Changes'}
                 </Button>
               </div>
             </form>
@@ -263,6 +323,7 @@ function Field({
   type = 'text',
   placeholder,
   required,
+  autoComplete,
 }: {
   label: string;
   value: string;
@@ -270,6 +331,7 @@ function Field({
   type?: string;
   placeholder?: string;
   required?: boolean;
+  autoComplete?: string;
 }) {
   return (
     <label className="space-y-2">
@@ -279,6 +341,7 @@ function Field({
         value={value}
         required={required}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
         className="h-11 border-[#2A2D35] bg-[#0E0F12] text-white focus-visible:ring-[#FF6D00]"
       />

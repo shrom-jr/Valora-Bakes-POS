@@ -28,6 +28,16 @@ export default function CommandBar() {
   const primaryHref = isDashboard ? '/register' : '/dashboard';
   const primaryLabel = isDashboard ? 'Counter Register' : 'Dashboard';
   const businessName = settings.profile.bakeryName.trim() || 'Valora Cakes & Pastries';
+  const emailPrefix = user?.email?.split('@')[0]?.replace(/[._-]+/g, ' ').trim() || '';
+  const staffName = user?.displayName?.trim()
+    || emailPrefix.replace(/\b[a-z]/g, (letter) => letter.toUpperCase())
+    || 'Staff';
+  const staffInitials = staffName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => Array.from(part)[0]?.toUpperCase() || '')
+    .join('') || 'ST';
 
   return (
     <header className="h-14 w-full bg-[#14161B] border-b border-[#FF6D00]/20 flex items-center justify-between px-4 sticky top-0 z-50 select-none shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15)]">
@@ -72,7 +82,12 @@ export default function CommandBar() {
         </div>
 
         <div className="flex items-center gap-2 rounded-full border border-[#FF6D00]/20 bg-[#0E0F12] py-1 pl-2 pr-1 sm:gap-3 sm:pl-3">
-          <span className="max-w-[88px] truncate text-xs font-semibold text-[#E2E8F0] sm:max-w-[140px]">{user?.email?.split('@')[0] || 'Staff'}</span>
+          <div className="flex min-w-0 items-center gap-2" title={staffName}>
+            <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#FFB300]/25 bg-[#FF6D00]/10 text-[10px] font-bold tracking-wide text-[#FFD54F]">
+              {staffInitials}
+            </span>
+            <span className="max-w-[88px] truncate text-xs font-semibold text-[#E2E8F0] sm:max-w-[140px]">{staffName}</span>
+          </div>
           <Button
             variant="ghost"
             size="icon"

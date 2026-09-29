@@ -8,3 +8,9 @@ Phase 2 treats every authenticated Firebase account as a trusted bakery staff ac
 **Why:** No cashier/manager role model or Admin SDK credentials were provided. Safe category deletion uses an atomic root Realtime Database transaction, so authenticated root transaction permission is required while child schema validation constrains stored records.
 
 **How to apply:** Only create accounts for trusted staff. Before allowing less-trusted users or separating cashier and manager duties, add Firebase custom claims or a trusted backend and tighten database rules accordingly.
+
+Keep individual staff name, email, and password in Firebase Auth rather than mirroring them into a shared RTDB settings profile. If more staff-specific fields are needed, store them under a user-UID keyed path with matching access rules.
+
+**Why:** A single shared staff profile would let one cashier overwrite another cashier's identity and could make receipt attribution unreliable.
+
+**How to apply:** Use the signed-in Firebase user for the header, account settings, and cashier identity. Only add RTDB staff fields when the schema is per-user and protected by UID-scoped rules.

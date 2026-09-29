@@ -247,7 +247,7 @@ export default function Dashboard() {
       setCompletedReceipt({
         orderNumber: result.orderNumber,
         createdAt: Date.now(),
-        cashierName: user?.displayName || user?.email || 'Counter Staff',
+        cashierName: user?.displayName?.trim() || user?.email?.trim() || 'Counter Staff',
         items: cart.map((item) => ({
           name: item.name,
           tierLabel: item.tierLabel,
