@@ -5,6 +5,7 @@ dist
 tmp
 out-tsc
 *.tsbuildinfo
+/artifacts/bakery-pos/public/generated/
 .expo
 .expo-shared
 
