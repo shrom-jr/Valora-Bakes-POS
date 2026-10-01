@@ -1,5 +1,5 @@
 import { database } from './firebase';
-import { ref, push, update, remove, runTransaction } from 'firebase/database';
+import { increment, ref, push, update, remove, runTransaction } from 'firebase/database';
 
 export interface Category {
   id: string;
@@ -88,7 +88,7 @@ export interface DailySummary {
 }
 
 export type ExpenseCategory = 'dairy' | 'packaging' | 'kitchen' | 'utilities' | 'other';
-export type ExpensePaidFrom = 'cashDrawer' | 'bankPersonal';
+export type ExpensePaidFrom = 'cash' | 'cashDrawer' | 'bankPersonal';
 export type ReceiptWidth = '80mm' | '58mm';
 
 export interface StoreProfile {
@@ -118,6 +118,7 @@ export interface ExpenseRecord {
   paidFrom: ExpensePaidFrom;
   note: string | null;
   createdAt: number;
+  createdBy: string | null;
   userId: string | null;
 }
 
@@ -585,53 +586,43 @@ export async function addExpense(input: {
   userId?: string | null;
 }): Promise<ExpenseRecord> {
   if (!database) throw new Error('Database not initialized');
-  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+  const numericAmount = Number(input.amount);
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
     throw new Error('Expense amount must be greater than zero');
   }
-  const amount = roundCurrency(input.amount);
+  const amount = roundCurrency(numericAmount);
   const dateKey = input.dateKey || getDateKey();
-  const expenseRef = push(ref(database, `expenses/${dateKey}`));
-  const expenseId = expenseRef.key;
-  if (!expenseId) throw new Error('Failed to generate expense ID');
+  const generatedKey = push(ref(database, `expenses/${dateKey}`)).key;
+  if (!generatedKey) throw new Error('Failed to generate expense ID');
 
-  let savedExpense: ExpenseRecord | null = null;
-  const result = await runTransaction(ref(database), (rootData) => {
-    if (!rootData) return undefined;
-    const now = Date.now();
-    const expense: ExpenseRecord = {
-      id: expenseId,
-      dateKey,
-      amount,
-      category: input.category,
-      paidFrom: input.paidFrom,
-      note: input.note?.trim() || null,
-      createdAt: now,
-      userId: input.userId || null,
-    };
-    const summary = {
-      ...emptyDailySummary(),
-      ...(rootData.dailySummaries?.[dateKey] || {}),
-    };
-    summary.totalExpenses = roundCurrency(summary.totalExpenses + amount);
-    if (input.paidFrom === 'cashDrawer') {
-      summary.cashDrawerExpenses = roundCurrency(summary.cashDrawerExpenses + amount);
-    }
-    summary.physicalCashToTally = roundCurrency(summary.cashInflow - summary.cashDrawerExpenses);
-    summary.netProfit = roundCurrency(summary.totalSales - summary.totalExpenses);
-    summary.updatedAt = now;
-    rootData.expenses ??= {};
-    rootData.expenses[dateKey] ??= {};
-    rootData.expenses[dateKey][expenseId] = expense;
-    rootData.dailySummaries ??= {};
-    rootData.dailySummaries[dateKey] = summary;
-    savedExpense = expense;
-    return rootData;
-  });
+  const createdAt = Date.now();
+  const createdBy = input.userId || null;
+  const expense: ExpenseRecord = {
+    id: generatedKey,
+    dateKey,
+    amount,
+    category: input.category,
+    paidFrom: input.paidFrom,
+    note: input.note?.trim() || null,
+    createdBy,
+    createdAt,
+    userId: createdBy,
+  };
+  const summaryPath = `dailySummaries/${dateKey}`;
+  const updates: Record<string, unknown> = {
+    [`expenses/${dateKey}/${generatedKey}`]: expense,
+    [`${summaryPath}/totalExpenses`]: increment(amount),
+    [`${summaryPath}/netProfit`]: increment(-amount),
+    [`${summaryPath}/updatedAt`]: createdAt,
+  };
 
-  if (!result.committed || !savedExpense) {
-    throw new Error('The expense could not be saved. Please try again.');
+  if (input.paidFrom === 'cash' || input.paidFrom === 'cashDrawer') {
+    updates[`${summaryPath}/cashDrawerExpenses`] = increment(amount);
+    updates[`${summaryPath}/physicalCashToTally`] = increment(-amount);
   }
-  return savedExpense;
+
+  await update(ref(database), updates);
+  return expense;
 }
 
 export async function voidSale(saleId: string, userId?: string | null, reason = 'Staff voided bill') {

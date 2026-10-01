@@ -148,7 +148,7 @@ export default function DashboardOverview() {
     setExpenseProcessing(true);
     setExpenseError('');
     try {
-      await addExpense({
+      const expense = await addExpense({
         dateKey,
         amount,
         category: expenseCategory,
@@ -157,7 +157,7 @@ export default function DashboardOverview() {
         userId: user?.uid || null,
       });
       setExpenseOpen(false);
-      toast({ title: 'Expense recorded', description: `${formatNpr(amount)} added to today’s expenses.` });
+      toast({ title: 'Expense recorded', description: `${formatNpr(expense.amount)} added to today’s expenses.` });
     } catch (err: any) {
       const message = err?.message || 'The expense could not be saved.';
       setExpenseError(message);

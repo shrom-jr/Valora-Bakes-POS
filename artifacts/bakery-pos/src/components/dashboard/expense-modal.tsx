@@ -17,9 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-
-export type ExpenseCategory = 'dairy' | 'packaging' | 'kitchen' | 'utilities' | 'other';
-export type ExpensePaidFrom = 'cashDrawer' | 'bankPersonal';
+import type { ExpenseCategory, ExpensePaidFrom } from '@/lib/rtdb';
 
 interface ExpenseModalProps {
   open: boolean;
