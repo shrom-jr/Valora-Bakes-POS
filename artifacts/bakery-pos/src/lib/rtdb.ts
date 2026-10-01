@@ -1,5 +1,5 @@
 import { database } from './firebase';
-import { ref, push, update, remove, runTransaction } from 'firebase/database';
+import { ref, push, update, remove, runTransaction, increment } from 'firebase/database';
 
 export interface Category {
   id: string;
@@ -594,44 +594,33 @@ export async function addExpense(input: {
   const expenseId = expenseRef.key;
   if (!expenseId) throw new Error('Failed to generate expense ID');
 
-  let savedExpense: ExpenseRecord | null = null;
-  const result = await runTransaction(ref(database), (rootData) => {
-    if (!rootData) return undefined;
-    const now = Date.now();
-    const expense: ExpenseRecord = {
-      id: expenseId,
-      dateKey,
-      amount,
-      category: input.category,
-      paidFrom: input.paidFrom,
-      note: input.note?.trim() || null,
-      createdAt: now,
-      userId: input.userId || null,
-    };
-    const summary = {
-      ...emptyDailySummary(),
-      ...(rootData.dailySummaries?.[dateKey] || {}),
-    };
-    summary.totalExpenses = roundCurrency(summary.totalExpenses + amount);
-    if (input.paidFrom === 'cashDrawer') {
-      summary.cashDrawerExpenses = roundCurrency(summary.cashDrawerExpenses + amount);
-    }
-    summary.physicalCashToTally = roundCurrency(summary.cashInflow - summary.cashDrawerExpenses);
-    summary.netProfit = roundCurrency(summary.totalSales - summary.totalExpenses);
-    summary.updatedAt = now;
-    rootData.expenses ??= {};
-    rootData.expenses[dateKey] ??= {};
-    rootData.expenses[dateKey][expenseId] = expense;
-    rootData.dailySummaries ??= {};
-    rootData.dailySummaries[dateKey] = summary;
-    savedExpense = expense;
-    return rootData;
+  const now = Date.now();
+  const expense: ExpenseRecord = {
+    id: expenseId,
+    dateKey,
+    amount,
+    category: input.category,
+    paidFrom: input.paidFrom,
+    note: input.note?.trim() || null,
+    createdAt: now,
+    userId: input.userId || null,
+  };
+  const dailySummaryPath = `dailySummaries/${dateKey}`;
+
+  await update(ref(database), {
+    [`expenses/${dateKey}/${expenseId}`]: expense,
+    [`${dailySummaryPath}/totalExpenses`]: increment(amount),
+    [`${dailySummaryPath}/cashDrawerExpenses`]: increment(
+      input.paidFrom === 'cashDrawer' ? amount : 0,
+    ),
+    [`${dailySummaryPath}/physicalCashToTally`]: increment(
+      input.paidFrom === 'cashDrawer' ? -amount : 0,
+    ),
+    [`${dailySummaryPath}/netProfit`]: increment(-amount),
+    [`${dailySummaryPath}/updatedAt`]: now,
   });
 
-  if (!result.committed || !savedExpense) {
-    throw new Error('The expense could not be saved. Please try again.');
-  }
-  return savedExpense;
+  return expense;
 }
 
 export async function voidSale(saleId: string, userId?: string | null, reason = 'Staff voided bill') {
