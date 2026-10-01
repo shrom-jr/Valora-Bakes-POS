@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { useLocation } from 'wouter';
 import { Eye, EyeOff, Lock, User, AlertCircle, ServerCrash } from 'lucide-react';
@@ -15,6 +15,7 @@ export default function SignIn() {
   const { user, isConfigured } = useAuth();
   const [, setLocation] = useLocation();
 
+  const [view, setView] = useState<'login' | 'reset' | 'reset-success'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -68,6 +69,63 @@ export default function SignIn() {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setError('Please enter your email address.');
+      return;
+    }
+
+    const emailField = e.currentTarget.elements.namedItem('email');
+    if (
+      emailField instanceof HTMLInputElement &&
+      !emailField.validity.valid
+    ) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (!auth) {
+      setError('Unable to send the reset link. Please try again.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail);
+      setView('reset-success');
+    } catch (err) {
+      if (err instanceof FirebaseError) {
+        switch (err.code) {
+          case 'auth/user-not-found':
+            setError('No account found with this email.');
+            break;
+          case 'auth/invalid-email':
+            setError('Please enter a valid email address.');
+            break;
+          case 'auth/too-many-requests':
+            setError('Too many attempts. Please wait a moment.');
+            break;
+          default:
+            setError('Unable to send the reset link. Please try again.');
+        }
+      } else {
+        setError('Unable to send the reset link. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const showLogin = () => {
+    setError(null);
+    setView('login');
+  };
+
   if (!isConfigured) {
     return (
       <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-[#0E0F12] relative overflow-hidden">
@@ -115,8 +173,8 @@ export default function SignIn() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] max-w-[600px] aspect-square bg-[#FF6D00]/10 rounded-full blur-[120px] pointer-events-none opacity-50" />
       
       <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-[#FFD54F] via-[#FF6D00] to-[#14161B] shadow-[0_4px_20px_-2px_rgba(255,109,0,0.15),0_0_0_1px_rgba(255,140,0,0.25)] w-full max-w-sm z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
-        <Card className="w-full h-full border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
-          <CardHeader className="space-y-4 pb-6 pt-8">
+        <Card className="flex min-h-[560px] w-full flex-col border-0 bg-[#14161B] rounded-[15px] shadow-none relative overflow-hidden">
+          <CardHeader className="min-h-[232px] space-y-4 pb-6 pt-8">
             <div className="mx-auto mb-4 flex h-36 w-36 items-center justify-center rounded-2xl bg-[#F7F0E3] p-2">
               <img src={__LOGO_URL__} alt="Valora Bakes" className="h-full w-full object-contain" />
             </div>
@@ -124,13 +182,36 @@ export default function SignIn() {
                <CardTitle className="brand-business-name text-2xl tracking-tight text-white">Valora Cakes &amp; Pastries</CardTitle>
                <p className="brand-powered-by text-[#FFD54F]">Powered by Shramik Rawal</p>
               <CardDescription className="text-[#E2E8F0]">
-                Sign in to your register session
+                {view === 'login'
+                  ? 'Sign in to your register session'
+                  : 'Enter your email to receive a recovery link'}
               </CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSignIn} className="space-y-5">
+          <CardContent className="flex flex-1 flex-col">
+            {view === 'reset-success' ? (
+              <div className="flex min-h-[280px] flex-1 flex-col justify-center gap-5">
+                <div
+                  role="status"
+                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm leading-relaxed text-emerald-100"
+                >
+                  Reset link sent! Check your inbox (and spam folder) to set a new password.
+                </div>
+                <Button
+                  type="button"
+                  onClick={showLogin}
+                  className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 py-3 text-white hover:from-amber-500 hover:to-orange-500"
+                >
+                  Back to Log In
+                </Button>
+              </div>
+            ) : (
+            <form
+              noValidate={view === 'reset'}
+              onSubmit={view === 'login' ? handleSignIn : handlePasswordReset}
+              className="flex min-h-[280px] flex-1 flex-col space-y-5"
+            >
               {error && (
                 <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 py-2.5 animate-in fade-in slide-in-from-top-2">
                   <AlertCircle className="h-4 w-4 text-destructive" />
@@ -145,63 +226,97 @@ export default function SignIn() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:stroke-[url(#flame-grad)] transition-all" />
                     <Input
                       id="email"
+                      name="email"
                       type="email"
-                      autoComplete="username"
+                      autoComplete={view === 'login' ? 'username' : 'email'}
                       placeholder="baker@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
+                      required={view === 'login'}
                       className="pl-9 bg-[#0E0F12] border-[#FF6D00]/20 focus-visible:bg-[#0E0F12] focus-visible:ring-1 focus-visible:ring-[#FFD54F] h-12 text-white placeholder:text-[#94A3B8] transition-all rounded-xl"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-xs font-bold text-[#E2E8F0] uppercase tracking-wider">Password</Label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:stroke-[url(#flame-grad)] transition-all" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="current-password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="pl-9 pr-10 bg-[#0E0F12] border-[#FF6D00]/20 focus-visible:bg-[#0E0F12] focus-visible:ring-1 focus-visible:ring-[#FFD54F] h-12 text-white font-mono placeholder:font-sans placeholder:text-[#94A3B8] transition-all rounded-xl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 group text-[#94A3B8] transition-all focus:outline-none rounded p-1"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 group-hover:stroke-[url(#flame-grad)] transition-all" />
-                      ) : (
-                        <Eye className="w-4 h-4 group-hover:stroke-[url(#flame-grad)] transition-all" />
-                      )}
-                    </button>
+                {view === 'login' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-xs font-bold text-[#E2E8F0] uppercase tracking-wider">Password</Label>
+                    <div className="relative group">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:stroke-[url(#flame-grad)] transition-all" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="pl-9 pr-10 bg-[#0E0F12] border-[#FF6D00]/20 focus-visible:bg-[#0E0F12] focus-visible:ring-1 focus-visible:ring-[#FFD54F] h-12 text-white font-mono placeholder:font-sans placeholder:text-[#94A3B8] transition-all rounded-xl"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 group text-[#94A3B8] transition-all focus:outline-none rounded p-1"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4 group-hover:stroke-[url(#flame-grad)] transition-all" />
+                        ) : (
+                          <Eye className="w-4 h-4 group-hover:stroke-[url(#flame-grad)] transition-all" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              <div className="group w-full rounded-xl">
+              {view === 'login' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setView('reset');
+                  }}
+                  className="text-xs text-amber-400/80 hover:text-amber-300 font-medium transition-colors cursor-pointer text-right w-full block mt-2 mb-4"
+                >
+                  Forgot password?
+                </button>
+              ) : null}
+
+              <div className="group mt-auto w-full rounded-xl">
                 <Button
                   type="submit"
-                  disabled={isLoading || !email || !password}
-                  className="w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFC94D] hover:via-[#FF7A18] hover:to-[#E95A1A] text-white font-bold text-lg tracking-wide transition-all hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.98] shadow-[0_0_18px_rgba(255,109,0,0.32),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_24px_rgba(255,109,0,0.45),0_10px_20px_rgba(0,0,0,0.45)] disabled:opacity-60 disabled:translate-y-0 disabled:scale-100 disabled:active:scale-100 disabled:shadow-[0_0_18px_rgba(255,109,0,0.18)] group-hover:disabled:opacity-70 group-hover:disabled:ring-1 group-hover:disabled:ring-[#FF8A00]/40 group-hover:disabled:shadow-[0_0_20px_rgba(255,109,0,0.28)] border-none rounded-xl"
+                  disabled={
+                    isLoading ||
+                    (view === 'login' && (!email || !password))
+                  }
+                  className={
+                    view === 'reset'
+                      ? 'w-full rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 py-3 text-white shadow-lg transition-all hover:from-amber-500 hover:to-orange-500'
+                      : 'w-full h-14 mt-2 bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] hover:from-[#FFC94D] hover:via-[#FF7A18] hover:to-[#E95A1A] text-white font-bold text-lg tracking-wide transition-all hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.98] shadow-[0_0_18px_rgba(255,109,0,0.32),0_8px_16px_rgba(0,0,0,0.4)] hover:shadow-[0_0_24px_rgba(255,109,0,0.45),0_10px_20px_rgba(0,0,0,0.45)] disabled:opacity-60 disabled:translate-y-0 disabled:scale-100 disabled:active:scale-100 disabled:shadow-[0_0_18px_rgba(255,109,0,0.18)] group-hover:disabled:opacity-70 group-hover:disabled:ring-1 group-hover:disabled:ring-[#FF8A00]/40 group-hover:disabled:shadow-[0_0_20px_rgba(255,109,0,0.28)] border-none rounded-xl'
+                  }
                 >
-                  {isLoading ? (
+                  {isLoading && view === 'login' ? (
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>Authenticating...</span>
                     </div>
                   ) : (
-                    'Log In'
+                    isLoading ? 'Sending link...' : view === 'reset' ? 'Send Reset Link' : 'Log In'
                   )}
                 </Button>
               </div>
+
+              {view === 'reset' && (
+                <button
+                  type="button"
+                  onClick={showLogin}
+                  className="text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer text-center w-full block mt-4"
+                >
+                  ← Back to Log In
+                </button>
+              )}
             </form>
+            )}
           </CardContent>
         </Card>
       </div>
