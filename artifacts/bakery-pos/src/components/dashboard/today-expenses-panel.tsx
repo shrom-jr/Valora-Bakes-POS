@@ -1,7 +1,7 @@
 import { AlertCircle, ReceiptText } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useExpensesInRange } from '@/hooks/use-rtdb';
-import { categoryLabel, fmtTime, formatNpr, initials, paidFromLabel, staffName } from '@/lib/expense-display';
+import { categoryLabel, fmtTime, formatNpr, paidFromLabel, staffName } from '@/lib/expense-display';
 
 export default function TodayExpensesPanel({ dateKey }: { dateKey: string }) {
   const { user } = useAuth();
@@ -32,17 +32,19 @@ export default function TodayExpensesPanel({ dateKey }: { dateKey: string }) {
           <h3 className="mt-3 text-sm font-bold text-white">No expenses recorded today.</h3>
         </div>
       ) : (
-        <div className="dashboard-scrollbar overflow-x-auto rounded-xl border border-[#2A2D35] bg-[#0E0F12]">
-          <table className="w-full min-w-[560px] border-collapse text-left">
+        <div className="w-full min-w-0 rounded-xl border border-[#2A2D35] bg-[#0E0F12]">
+          <table className="w-full table-fixed border-collapse text-left">
             <caption className="sr-only">Today&apos;s expenses</caption>
+            <colgroup>
+              <col className="w-[35%] sm:w-[40%]" />
+              <col className="w-[35%]" />
+              <col className="w-[30%] sm:w-[25%]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-[#FF6D00]/15 bg-[#14161B] text-[10px] font-bold uppercase tracking-[0.14em] text-[#64748B]">
-                <th scope="col" className="px-3 py-3">Time</th>
-                <th scope="col" className="px-3 py-3">Category</th>
-                <th scope="col" className="px-3 py-3">Note</th>
-                <th scope="col" className="px-3 py-3">Paid From</th>
-                <th scope="col" className="px-3 py-3">Logged By</th>
-                <th scope="col" className="px-3 py-3 text-right">Amount</th>
+                <th scope="col" className="px-1.5 py-3 sm:px-3">Expense</th>
+                <th scope="col" className="px-1.5 py-3 sm:px-3">Source &amp; Time</th>
+                <th scope="col" className="px-1.5 py-3 text-right sm:px-3">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2A2D35]">
@@ -50,19 +52,23 @@ export default function TodayExpensesPanel({ dateKey }: { dateKey: string }) {
                 const name = staffName(e, user);
                 return (
                   <tr key={e.id} className="text-sm text-[#E2E8F0]" data-testid={`row-expense-${e.id}`}>
-                    <td className="whitespace-nowrap px-3 py-3 font-mono text-xs text-[#94A3B8]">{fmtTime(e.createdAt)}</td>
-                    <td className="whitespace-nowrap px-3 py-3">
-                      <span className="rounded-full border border-[#FFB300]/25 bg-[#FFB300]/10 px-2.5 py-1 text-[10px] font-bold text-[#FFD54F]">{categoryLabel[e.category] || 'Other'}</span>
-                    </td>
-                    <td className="max-w-[140px] truncate px-3 py-3 text-xs" title={e.note || undefined}>{e.note || '—'}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-xs text-[#CBD5E1]">{paidFromLabel[e.paidFrom] || e.paidFrom}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-xs">
-                      <span className="inline-flex items-center gap-2">
-                        <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF6D00]/15 text-[10px] font-bold text-[#FFB300]">{initials(name)}</span>
-                        {name}
+                    <td className="min-w-0 px-1.5 py-3 align-top sm:px-3">
+                      <span className="inline-block max-w-full whitespace-normal break-words rounded-full border border-[#FFB300]/25 bg-[#FFB300]/10 px-2 py-1 text-[10px] font-bold leading-tight text-[#FFD54F] sm:px-2.5">
+                        {categoryLabel[e.category] || 'Other'}
                       </span>
+                      <p className="mt-1.5 break-words text-xs text-white/50">
+                        {e.note ? `Note: ${e.note}` : 'Note: None'}
+                      </p>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-sm font-bold text-[#FF8A65]">-{formatNpr(e.amount)}</td>
+                    <td className="min-w-0 px-1.5 py-3 align-top sm:px-3">
+                      <p className="break-words text-xs leading-4 text-[#CBD5E1]">
+                        {paidFromLabel[e.paidFrom] || e.paidFrom} · {name}
+                      </p>
+                      <p className="mt-1.5 font-mono text-xs text-white/50">{fmtTime(e.createdAt)}</p>
+                    </td>
+                    <td className="whitespace-nowrap px-1.5 py-3 text-right align-top font-mono text-[10px] font-bold tabular-nums text-[#FF8A65] sm:px-3 sm:text-[11px] xl:text-sm">
+                      -{formatNpr(e.amount)}
+                    </td>
                   </tr>
                 );
               })}
