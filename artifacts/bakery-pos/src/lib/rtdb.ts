@@ -119,6 +119,7 @@ export interface ExpenseRecord {
   note: string | null;
   createdAt: number;
   createdBy: string | null;
+  createdByName: string | null;
   userId: string | null;
 }
 
@@ -584,6 +585,7 @@ export async function addExpense(input: {
   paidFrom: ExpensePaidFrom;
   note?: string;
   userId?: string | null;
+  createdByName?: string | null;
 }): Promise<ExpenseRecord> {
   if (!database) throw new Error('Database not initialized');
   const numericAmount = Number(input.amount);
@@ -605,6 +607,7 @@ export async function addExpense(input: {
     paidFrom: input.paidFrom,
     note: input.note?.trim() || null,
     createdBy,
+    createdByName: input.createdByName?.trim() || null,
     createdAt,
     userId: createdBy,
   };

@@ -33,6 +33,7 @@ import {
 } from '@/hooks/use-rtdb';
 import ExpenseModal from '@/components/dashboard/expense-modal';
 import TodayBillsTable, { TodayBill } from '@/components/dashboard/today-bills-table';
+import TodayExpensesPanel from '@/components/dashboard/today-expenses-panel';
 import { useToast } from '@/hooks/use-toast';
 
 const formatNpr = (amount: number) => `NPR ${amount.toFixed(2)}`;
@@ -155,6 +156,7 @@ export default function DashboardOverview() {
         paidFrom: expensePaidFrom,
         note: expenseNote,
         userId: user?.uid || null,
+        createdByName: user?.displayName?.trim() || user?.email?.split('@')[0]?.trim() || null,
       });
       setExpenseOpen(false);
       toast({ title: 'Expense recorded', description: `${formatNpr(expense.amount)} added to today’s expenses.` });
@@ -328,16 +330,19 @@ export default function DashboardOverview() {
                 </article>
               </section>
 
-              <section className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Audit trail</p>
-                    <h2 className="mt-2 text-xl font-bold text-white">Today&apos;s Bills</h2>
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <section className="min-w-0 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Audit trail</p>
+                      <h2 className="mt-2 text-xl font-bold text-white">Today&apos;s Bills</h2>
+                    </div>
+                    <Boxes className="h-5 w-5 text-[#FFD54F]" />
                   </div>
-                  <Boxes className="h-5 w-5 text-[#FFD54F]" />
-                </div>
-                <TodayBillsTable bills={bills} onVoid={handleVoidBill} voidingSaleId={voidingSaleId} />
-              </section>
+                  <TodayBillsTable bills={bills} onVoid={handleVoidBill} voidingSaleId={voidingSaleId} />
+                </section>
+                <TodayExpensesPanel dateKey={dateKey} />
+              </div>
             </main>
           </div>
         )}

@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
-import { ref, onValue } from 'firebase/database';
+import { endAt, onValue, orderByKey, query, ref, startAt } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { Category, DailySummary, defaultStoreSettings, getDateKey, MenuItem, SaleRecord, ShelfInventory, StoreSettings } from '@/lib/rtdb';
+import {
+  Category,
+  DailySummary,
+  defaultStoreSettings,
+  ExpenseCategory,
+  ExpensePaidFrom,
+  ExpenseRecord,
+  getDateKey,
+  MenuItem,
+  SaleRecord,
+  ShelfInventory,
+  StoreSettings,
+} from '@/lib/rtdb';
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -283,6 +295,80 @@ export function useDailySummaries(startDateKey: string, endDateKey: string) {
   }, [startDateKey, endDateKey]);
 
   return { summaries, loading, error };
+}
+
+export function useExpensesInRange(startDateKey: string, endDateKey: string) {
+  const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+
+    if (!database || startDateKey > endDateKey) {
+      setExpenses([]);
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    const expenseQuery = startDateKey === endDateKey
+      ? ref(database, `expenses/${startDateKey}`)
+      : query(
+          ref(database, 'expenses'),
+          orderByKey(),
+          startAt(startDateKey),
+          endAt(endDateKey),
+        );
+    const unsubscribe = onValue(
+      expenseQuery,
+      (snapshot) => {
+        if (!active) return;
+        const value = snapshot.val() as Record<string, unknown> | null;
+        const buckets = startDateKey === endDateKey
+          ? { [startDateKey]: value }
+          : value || {};
+        const parsed = Object.entries(buckets || {}).flatMap(([dateKey, rawBucket]) => {
+          if (!rawBucket || typeof rawBucket !== 'object') return [];
+          return Object.entries(rawBucket as Record<string, unknown>).flatMap(([key, rawExpense]) => {
+            if (!rawExpense || typeof rawExpense !== 'object') return [];
+            const record = rawExpense as Partial<ExpenseRecord>;
+            const userId = record.userId || record.createdBy || null;
+            const createdBy = record.createdBy || record.userId || null;
+            return [{
+              id: record.id || key,
+              dateKey: record.dateKey || dateKey,
+              amount: Number(record.amount) || 0,
+              category: (record.category || 'other') as ExpenseCategory,
+              paidFrom: (record.paidFrom || 'cashDrawer') as ExpensePaidFrom,
+              note: record.note || null,
+              createdAt: Number(record.createdAt) || 0,
+              createdBy,
+              createdByName: record.createdByName || null,
+              userId,
+            }];
+          });
+        });
+        parsed.sort((a, b) => b.createdAt - a.createdAt);
+        setExpenses(parsed);
+        setLoading(false);
+      },
+      (err) => {
+        if (!active) return;
+        setError(err);
+        setLoading(false);
+      },
+    );
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [startDateKey, endDateKey]);
+
+  return { expenses, loading, error };
 }
 
 export function useStoreSettings() {

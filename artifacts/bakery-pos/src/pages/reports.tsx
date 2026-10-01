@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { AlertCircle, BarChart3, Boxes, Loader2, RefreshCw, TrendingDown, Trophy } from 'lucide-react';
+import { AlertCircle, BarChart3, Boxes, Loader2, ReceiptText, RefreshCw, TrendingDown, Trophy } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import DashboardShell from '@/components/layout/dashboard-shell';
 import { Button } from '@/components/ui/button';
-import { useDailySummaries, useAllSales, useMenuItems } from '@/hooks/use-rtdb';
+import ExpenseBreakdownDialog from '@/components/dashboard/expense-breakdown-dialog';
+import { categoryLabel, fmtDateTime } from '@/lib/expense-display';
+import { useExpensesInRange, useDailySummaries, useAllSales, useMenuItems } from '@/hooks/use-rtdb';
 import { getDateKey, SaleRecord } from '@/lib/rtdb';
 
 type ReportRange = 'today' | 'yesterday' | 'week' | 'month';
@@ -56,6 +58,9 @@ function ReportKpi({ label, value, detail, tone }: { label: string; value: strin
 export default function Reports() {
   const [range, setRange] = useState<ReportRange>('today');
   const selectedRange = useMemo(() => dateRange(range), [range]);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const { expenses, loading: expLoading, error: expError } = useExpensesInRange(selectedRange.start, selectedRange.end);
+  const periodLabel = rangeOptions.find((o) => o.value === range)?.label || '';
   const { sales, loading: salesLoading, error: salesError } = useAllSales();
   const { items, loading: itemsLoading, error: itemsError } = useMenuItems();
   const { summaries, loading: summariesLoading, error: summariesError } = useDailySummaries(selectedRange.start, selectedRange.end);
@@ -132,8 +137,8 @@ export default function Reports() {
     return rows.sort((a, b) => a.quantity - b.quantity || a.revenue - b.revenue).slice(0, 5);
   }, [filteredSales, items]);
 
-  const isLoading = salesLoading || itemsLoading || summariesLoading;
-  const error = salesError || itemsError || summariesError;
+  const isLoading = salesLoading || itemsLoading || summariesLoading || expLoading;
+  const error = salesError || itemsError || summariesError || expError;
 
   return (
     <AppShell>
@@ -142,7 +147,7 @@ export default function Reports() {
           <div className="flex min-h-full flex-col items-center justify-center bg-[#0E0F12] p-8 text-center">
             <AlertCircle className="mb-4 h-10 w-10 text-[#F4511E]" />
             <p className="font-bold text-white">Unable to load sales reports</p>
-            <p className="mt-2 max-w-md text-sm text-[#94A3B8]">The selected sales or daily summary records could not be read.</p>
+            <p className="mt-2 max-w-md text-sm text-[#94A3B8]">The selected sales, expenses, or daily summary records could not be read.</p>
             <Button onClick={() => window.location.reload()} variant="outline" className="mt-5 border-[#F4511E]/25 bg-[#14161B] text-white hover:bg-[#2A2D35]">
               <RefreshCw className="mr-2 h-4 w-4" /> Retry
             </Button>
@@ -186,7 +191,7 @@ export default function Reports() {
                 <ReportKpi label="Net Margin" value={formatNpr(metrics.net)} detail={metrics.net >= 0 ? 'Revenue minus outflow' : 'Negative period margin'} tone={metrics.net >= 0 ? 'via-[#10B981]' : 'via-[#F4511E]'} />
               </section>
 
-              <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+              <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <article className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -238,11 +243,46 @@ export default function Reports() {
                     </div>
                   )}
                 </article>
+                <article className="flex min-w-0 flex-col rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#FFB300]">EXPENSES</p>
+                      <h2 className="mt-2 text-xl font-bold text-white">Recent Expenses</h2>
+                    </div>
+                    <ReceiptText className="h-5 w-5 text-[#FFD54F]" />
+                  </div>
+                  {expenses.length === 0 ? (
+                    <EmptyReport text="No expenses in this period." />
+                  ) : (
+                    <div className="mt-5 flex-1 space-y-2">
+                      {expenses.slice(0, 4).map((e) => (
+                        <div key={`${e.dateKey}-${e.id}`} className="flex items-center gap-3 rounded-xl border border-[#2A2D35] bg-[#0E0F12] px-3 py-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-white">{categoryLabel[e.category] || 'Other'}</p>
+                            <p className="mt-1 truncate text-[11px] text-[#94A3B8]">{e.note ? `${e.note} · ` : ''}{fmtDateTime(e.createdAt)}</p>
+                          </div>
+                          <p className="shrink-0 font-mono text-xs font-bold text-[#FF8A65]">{formatNpr(e.amount)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {expenses.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setBreakdownOpen(true)}
+                      data-testid="button-view-all-expenses"
+                      className="mt-4 min-h-10 w-full rounded-xl border border-[#FFB300]/30 bg-[#FFB300]/10 px-3 text-xs font-bold text-[#FFD54F] transition hover:bg-[#FFB300]/20"
+                    >
+                      View all expenses ({expenses.length}) →
+                    </button>
+                  )}
+                </article>
               </section>
             </main>
           </div>
         )}
       </DashboardShell>
+      <ExpenseBreakdownDialog open={breakdownOpen} onOpenChange={setBreakdownOpen} expenses={expenses} periodLabel={periodLabel} />
     </AppShell>
   );
 }

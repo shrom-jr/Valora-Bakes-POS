@@ -1,0 +1,80 @@
+MASTER UI & AUDIT UPDATE: Split Overview Audit Trail & Reports 3-Card Expense Ledger with Modal
+
+Implement two coordinated updates across Overview and Reports:
+
+================================================================================
+PART 1: OVERVIEW SCREEN (artifacts/bakery-pos/src/pages/dashboard-overview.tsx)
+================================================================================
+Split the bottom Audit Trail area into two dedicated, simultaneously visible sections (no tab-switching required):
+
+1. Layout & Structure:
+- Under the middle metrics row, create a two-column or split layout for today's logs:
+  - Left Panel: "Today's Bills" (displays the existing bills/orders audit trail).
+  - Right Panel: "Today's Expenses" (displays real-time expenses recorded today).
+  - Use responsive layout: `grid grid-cols-1 lg:grid-cols-2 gap-6`.
+
+2. Real-Time Expenses Stream:
+- Subscribe via Firebase RTDB `onValue` to `expenses/${dateKey}`.
+- Sort entries descending by `createdAt` (newest first).
+
+3. "Today's Expenses" Table Layout:
+- Header:
+  - Overline: "AUDIT TRAIL"
+  - Title: "Today's Expenses" with a count badge (e.g. `(2)`).
+- Table / Row Columns:
+  1. TIME: Formatted local time (e.g. `04:15 AM`) from `createdAt`.
+  2. CATEGORY: Clean category pill badge (e.g. "Dairy / Milk", "Utilities", "Packaging").
+  3. NOTE: Note text, or "—" if empty.
+  4. PAID FROM: Badge showing "Cash Drawer" or "Bank / Personal".
+  5. LOGGED BY: Staff display name or initials (e.g. "Anish").
+  6. AMOUNT: Highlighted in red/amber font (e.g. `-NPR 100.00`).
+- Empty State: If no expenses are recorded today, display a clean placeholder: "No expenses recorded today."
+
+================================================================================
+PART 2: REPORTS SCREEN (artifacts/bakery-pos/src/pages/dashboard-reports.tsx)
+================================================================================
+Convert the middle section into a 3-card row and add a detailed breakdown modal:
+
+1. 3-Card Row Grid Layout:
+- Change the grid holding "Top 5 Best Sellers" and "Slow-Moving Inventory" to 3 equal columns: `grid grid-cols-1 lg:grid-cols-3 gap-6`.
+  - Card 1: Top 5 Best Sellers (existing).
+  - Card 2: Slow-Moving Inventory (existing).
+  - Card 3: "Recent Expenses" (new card).
+
+2. "Recent Expenses" Card Specifications:
+- Header:
+  - Overline: "EXPENSES" (gold text).
+  - Title: "Recent Expenses".
+  - Icon: Receipt icon matching the existing card headers.
+- Stacked Entries (Newest First):
+  - Show the 3 to 4 most recent expense items for the selected filter period (Today, Yesterday, This Week, This Month).
+  - Each item row must show:
+    - Top line: Category name (e.g. "Dairy / Milk").
+    - Bottom line (subtle muted text): Note (if present) followed by date and time (e.g. "milk · Oct 02, 04:15 AM").
+    - Right side: Bold currency amount (e.g. "NPR 100.00").
+- Card Footer Action:
+  - If expenses exist, render a clean footer button: "View all expenses ({count}) →".
+  - Clicking this opens the "Full Expense Breakdown" modal.
+- Empty State: If no expenses in the selected period, display "No expenses in this period."
+
+3. "Full Expense Breakdown" Modal:
+- Triggered by clicking "View all expenses".
+- Modal Container: Obsidian dark theme card (`bg-[#14161B] border border-white/10 rounded-2xl max-w-3xl w-full p-6 shadow-2xl`).
+- Header:
+  - Title: "Full Expense Breakdown".
+  - Subtitle: Selected period name and total outflow sum (e.g. "Total Outflow: NPR 300.00").
+  - Top-right close button [✕].
+- Top Section: Category Share Summary:
+  - Plain, clean percentage breakdown list (no loading bars).
+  - For each category with spending: Category name, total NPR, and percentage of total outflow (e.g. "Dairy / Milk: NPR 100.00 (33.3%)", "Utilities: NPR 200.00 (66.7%)").
+- Bottom Section: Complete Itemized Log:
+  - Table showing all expenses in the active period sorted by newest first:
+    - Columns: Date & Time, Category, Note, Paid From, Recorded By, Amount.
+- Modal dismissible via [✕] button, backdrop click, or Escape key.
+
+================================================================================
+PART 3: BUILD VERIFICATION
+================================================================================
+- Ensure date filtering (Today, Yesterday, This Week, This Month) accurately scopes expense records across both the card and modal.
+- Run `npm run typecheck` and production build to confirm zero TypeScript or bundling errors.
+- Restart the Bakery POS development workflow.
