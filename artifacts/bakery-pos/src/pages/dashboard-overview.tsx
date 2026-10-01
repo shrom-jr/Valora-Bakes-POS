@@ -57,12 +57,12 @@ function KpiCard({
     <article className="relative min-w-0 overflow-hidden rounded-xl border border-[#FF6D00]/15 bg-[#14161B] px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <div className={`absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent ${tone} to-transparent`} />
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[10px] font-bold uppercase tracking-[0.13em] text-[#CBD5E1]">{label}</p>
+        <p className="truncate text-[10px] font-bold uppercase tracking-[0.13em] text-slate-200">{label}</p>
         <Icon className="h-4 w-4 shrink-0 text-[#FFD54F]" />
       </div>
       <p className="mt-2 font-mono text-xl font-bold tracking-tight text-white">{value}</p>
       <div className="mt-1 flex min-h-7 items-center justify-between gap-2">
-        <p className="truncate text-[11px] text-[#64748B]">{detail}</p>
+        <p className="truncate text-[11px] font-medium text-slate-200">{detail}</p>
         {action}
       </div>
     </article>
@@ -198,7 +198,7 @@ export default function DashboardOverview() {
           <div className="flex min-h-full flex-col items-center justify-center bg-[#0E0F12] p-8 text-center">
             <AlertCircle className="mb-4 h-10 w-10 text-[#F4511E]" />
             <p className="font-bold text-white">Unable to load today&apos;s control room</p>
-            <p className="mt-2 max-w-md text-sm text-[#94A3B8]">The live summary or register records could not be read.</p>
+            <p className="mt-2 max-w-md text-sm text-slate-200">The live summary or register records could not be read.</p>
             <Button onClick={() => window.location.reload()} variant="outline" className="mt-5 border-[#F4511E]/25 bg-[#14161B] text-white hover:bg-[#2A2D35]">
               <RefreshCw className="mr-2 h-4 w-4" /> Retry
             </Button>
@@ -214,7 +214,7 @@ export default function DashboardOverview() {
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Daily control room · {dateKey}</p>
                   <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">Overview</h1>
-                  <p className="mt-2 text-sm text-[#94A3B8]">Live sales, cash position, expenses, and bill audit for today.</p>
+                  <p className="mt-2 text-sm text-slate-200">Live sales, cash position, expenses, and bill audit for today.</p>
                 </div>
                 <Button
                   type="button"
@@ -225,7 +225,7 @@ export default function DashboardOverview() {
                 </Button>
               </header>
 
-              <section aria-label="Daily financial KPIs" className="grid grid-cols-2 gap-3 2xl:grid-cols-5">
+              <section aria-label="Daily financial KPIs" className="grid grid-cols-2 gap-3 lg:grid-cols-5">
                 <KpiCard
                   label="Today&apos;s Sales"
                   value={formatNpr(summary.totalSales)}
@@ -275,22 +275,36 @@ export default function DashboardOverview() {
                 />
               </section>
 
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <section className="min-w-0 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-300">Audit trail</p>
+                      <h2 className="mt-2 text-xl font-bold text-white">Today&apos;s Bills</h2>
+                    </div>
+                    <Boxes className="h-5 w-5 text-[#FFD54F]" />
+                  </div>
+                  <TodayBillsTable bills={bills} onVoid={handleVoidBill} voidingSaleId={voidingSaleId} />
+                </section>
+                <TodayExpensesPanel dateKey={dateKey} />
+              </div>
+
               <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.05fr_0.95fr]">
                 <article className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Today&apos;s Settlement Details</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-300">Today&apos;s Settlement Details</p>
                       <h2 className="mt-2 text-xl font-bold text-white">Register activity</h2>
                     </div>
                     <BarChart3Icon />
                   </div>
                   <div className="mt-6 grid grid-cols-2 gap-3">
                     <div className="rounded-xl border border-[#2A2D35] bg-[#0E0F12] p-4">
-                      <p className="text-xs text-[#64748B]">Average ticket size</p>
+                      <p className="text-xs font-medium text-slate-200">Average ticket size</p>
                       <p className="mt-2 font-mono text-lg font-bold text-white">{formatNpr(summary.orderCount ? summary.totalSales / summary.orderCount : 0)}</p>
                     </div>
                     <div className="rounded-xl border border-[#2A2D35] bg-[#0E0F12] p-4">
-                      <p className="text-xs text-[#64748B]">Cash / QR split</p>
+                      <p className="text-xs font-medium text-slate-200">Cash / QR split</p>
                       <p className="mt-2 font-mono text-lg font-bold text-white">
                         {summary.totalSales ? `${Math.round((summary.cashInflow / summary.totalSales) * 100)}% / ${Math.round((summary.digitalInflow / summary.totalSales) * 100)}%` : '0% / 0%'}
                       </p>
@@ -305,7 +319,7 @@ export default function DashboardOverview() {
                 <article className="rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Shelf readiness</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-300">Shelf readiness</p>
                       <h2 className="mt-2 text-xl font-bold text-white">Stock alerts</h2>
                     </div>
                     <PackageSearch className="h-5 w-5 text-[#FFD54F]" />
@@ -320,7 +334,7 @@ export default function DashboardOverview() {
                         <div key={`${alert.itemName}-${alert.tierLabel}`} className="flex items-center justify-between gap-3 rounded-xl border border-[#F4511E]/20 bg-[#0E0F12] px-3 py-2.5">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-white">{alert.itemName}</p>
-                            <p className="mt-1 truncate text-xs text-[#94A3B8]">{alert.tierLabel} · threshold {alert.threshold}</p>
+                            <p className="mt-1 truncate text-xs font-medium text-slate-200">{alert.tierLabel} · threshold {alert.threshold}</p>
                           </div>
                           <span className={`shrink-0 font-mono text-sm font-bold ${alert.quantity <= 0 ? 'text-[#FF8A65]' : 'text-[#FFD54F]'}`}>{alert.quantity}</span>
                         </div>
@@ -329,20 +343,6 @@ export default function DashboardOverview() {
                   )}
                 </article>
               </section>
-
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <section className="min-w-0 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B] p-5">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Audit trail</p>
-                      <h2 className="mt-2 text-xl font-bold text-white">Today&apos;s Bills</h2>
-                    </div>
-                    <Boxes className="h-5 w-5 text-[#FFD54F]" />
-                  </div>
-                  <TodayBillsTable bills={bills} onVoid={handleVoidBill} voidingSaleId={voidingSaleId} />
-                </section>
-                <TodayExpensesPanel dateKey={dateKey} />
-              </div>
             </main>
           </div>
         )}

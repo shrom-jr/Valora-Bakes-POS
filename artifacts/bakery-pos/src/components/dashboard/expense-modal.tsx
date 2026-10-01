@@ -74,7 +74,7 @@ export default function ExpenseModal({
             <Banknote className="h-5 w-5 text-[#FFD54F]" />
             Add daily expense
           </DialogTitle>
-          <DialogDescription className="text-[#94A3B8]">
+          <DialogDescription className="font-medium text-slate-200">
             Record an outflow so the daily cash tally and net profit stay accurate.
           </DialogDescription>
         </DialogHeader>
@@ -121,7 +121,7 @@ export default function ExpenseModal({
                     className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-bold transition ${
                       selected
                         ? 'border-[#FFB300]/60 bg-[#FFB300]/15 text-[#FFD54F] shadow-[inset_0_0_0_1px_rgba(255,179,0,0.2)]'
-                        : 'border-[#2A2D35] bg-[#0E0F12] text-[#94A3B8] hover:border-[#FF6D00]/45 hover:text-white'
+                        : 'border-[#2A2D35] bg-[#0E0F12] font-medium text-slate-200 hover:border-[#FF6D00]/45 hover:text-white'
                     }`}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -150,7 +150,7 @@ export default function ExpenseModal({
                     className={`min-h-11 rounded-lg px-2 text-xs font-bold transition ${
                       selected
                         ? 'bg-[#FF6D00]/20 text-[#FFD54F] shadow-[inset_0_0_0_1px_rgba(255,109,0,0.35)]'
-                        : 'text-[#94A3B8] hover:bg-[#2A2D35] hover:text-white'
+                        : 'font-medium text-slate-200 hover:bg-[#2A2D35] hover:text-white'
                     }`}
                   >
                     {option.label}
@@ -162,7 +162,7 @@ export default function ExpenseModal({
 
           <div className="space-y-2">
             <label htmlFor="expense-note" className="text-sm font-bold text-[#E2E8F0]">
-              Note <span className="font-normal text-[#64748B]">(Optional)</span>
+              Note <span className="font-medium text-slate-200">(Optional)</span>
             </label>
             <Input
               id="expense-note"
