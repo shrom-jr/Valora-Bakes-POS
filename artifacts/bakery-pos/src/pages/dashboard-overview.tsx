@@ -41,30 +41,22 @@ const formatNpr = (amount: number) => `NPR ${amount.toFixed(2)}`;
 function KpiCard({
   label,
   value,
-  detail,
   icon: Icon,
   tone,
-  action,
 }: {
   label: string;
   value: string;
-  detail: string;
   icon: React.ElementType;
   tone: string;
-  action?: React.ReactNode;
 }) {
   return (
-    <article className="relative min-w-0 overflow-hidden rounded-xl border border-[#FF6D00]/15 bg-[#14161B] px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+    <article className="relative flex h-full min-h-[104px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-[#FF6D00]/15 bg-[#14161B] p-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <div className={`absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent ${tone} to-transparent`} />
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-[10px] font-bold uppercase tracking-[0.13em] text-slate-200">{label}</p>
         <Icon className="h-4 w-4 shrink-0 text-[#FFD54F]" />
       </div>
-      <p className="mt-2 font-mono text-xl font-bold tracking-tight text-white">{value}</p>
-      <div className="mt-1 flex min-h-7 items-center justify-between gap-2">
-        <p className="truncate text-[11px] font-medium text-slate-200">{detail}</p>
-        {action}
-      </div>
+      <p className="mt-auto pt-3 font-mono text-xl font-bold tracking-tight text-white">{value}</p>
     </article>
   );
 }
@@ -127,6 +119,7 @@ export default function DashboardOverview() {
     [sales],
   );
 
+  const netProfit = summary.totalSales - summary.totalExpenses;
   const isLoading = categoriesLoading || itemsLoading || inventoryLoading || summaryLoading || salesLoading;
   const error = categoriesError || itemsError || inventoryError || summaryError || salesError;
 
@@ -229,49 +222,32 @@ export default function DashboardOverview() {
                 <KpiCard
                   label="Today&apos;s Sales"
                   value={formatNpr(summary.totalSales)}
-                  detail={`${summary.orderCount} settled bill${summary.orderCount === 1 ? '' : 's'}`}
                   icon={ReceiptText}
                   tone="via-[#FFD54F]"
                 />
                 <KpiCard
-                  label="Physical Cash to Tally"
-                  value={formatNpr(summary.physicalCashToTally)}
-                  detail={`${formatNpr(summary.cashInflow)} cash inflow`}
+                  label="Cash Payments"
+                  value={formatNpr(summary.cashInflow)}
                   icon={Banknote}
                   tone="via-[#FFB300]"
                 />
                 <KpiCard
-                  label="Digital / QR Inflow"
+                  label="QR Payments"
                   value={formatNpr(summary.digitalInflow)}
-                  detail="Counter standee settlements"
                   icon={CreditCard}
                   tone="via-[#FF6D00]"
                 />
                 <KpiCard
-                  label="Daily Expenses"
+                  label="Today&apos;s Expenses"
                   value={formatNpr(summary.totalExpenses)}
-                  detail={`${formatNpr(summary.cashDrawerExpenses)} from drawer`}
                   icon={CircleDollarSign}
                   tone="via-[#F4511E]"
-                  action={(
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={openExpenseModal}
-                      aria-label="Add expense"
-                      className="h-7 w-7 shrink-0 rounded-lg text-[#FFD54F] hover:bg-[#FFB300]/10 hover:text-white"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  )}
                 />
                 <KpiCard
                   label="Net Profit"
-                  value={formatNpr(summary.netProfit)}
-                  detail={summary.netProfit >= 0 ? 'Sales minus expenses' : 'Negative daily margin'}
+                  value={formatNpr(netProfit)}
                   icon={TrendingUp}
-                  tone={summary.netProfit >= 0 ? 'via-[#10B981]' : 'via-[#F4511E]'}
+                  tone={netProfit >= 0 ? 'via-[#10B981]' : 'via-[#F4511E]'}
                 />
               </section>
 
