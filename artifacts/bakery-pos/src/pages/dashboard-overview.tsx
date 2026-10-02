@@ -38,25 +38,64 @@ import { useToast } from '@/hooks/use-toast';
 
 const formatNpr = (amount: number) => `NPR ${amount.toFixed(2)}`;
 
+type KpiTheme = 'sales' | 'cash' | 'qr' | 'expenses' | 'profit';
+
+const kpiThemes: Record<KpiTheme, { border: string; background: string; accent: string; rim: string }> = {
+  sales: {
+    border: 'border-amber-500/40 hover:border-amber-500/70',
+    background: 'bg-gradient-to-b from-amber-500/10 via-[#14161B] to-[#14161B]',
+    accent: 'text-amber-400',
+    rim: 'via-amber-400/70',
+  },
+  cash: {
+    border: 'border-emerald-500/40 hover:border-emerald-500/70',
+    background: 'bg-gradient-to-b from-emerald-500/10 via-[#14161B] to-[#14161B]',
+    accent: 'text-emerald-400',
+    rim: 'via-emerald-400/70',
+  },
+  qr: {
+    border: 'border-cyan-500/40 hover:border-cyan-500/70',
+    background: 'bg-gradient-to-b from-cyan-500/10 via-[#14161B] to-[#14161B]',
+    accent: 'text-cyan-400',
+    rim: 'via-cyan-400/70',
+  },
+  expenses: {
+    border: 'border-rose-500/40 hover:border-rose-500/70',
+    background: 'bg-gradient-to-b from-rose-500/10 via-[#14161B] to-[#14161B]',
+    accent: 'text-rose-400',
+    rim: 'via-rose-400/70',
+  },
+  profit: {
+    border: 'border-purple-500/40 hover:border-purple-500/70',
+    background: 'bg-gradient-to-b from-purple-500/10 via-[#14161B] to-[#14161B]',
+    accent: 'text-purple-400',
+    rim: 'via-purple-400/70',
+  },
+};
+
 function KpiCard({
   label,
   value,
   icon: Icon,
-  tone,
+  theme: themeKey,
+  negativeValue = false,
 }: {
   label: string;
   value: string;
   icon: React.ElementType;
-  tone: string;
+  theme: KpiTheme;
+  negativeValue?: boolean;
 }) {
+  const theme = kpiThemes[themeKey];
+
   return (
-    <article className="relative flex h-full min-h-[104px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-[#FF6D00]/15 bg-[#14161B] p-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-      <div className={`absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent ${tone} to-transparent`} />
+    <article className={`relative flex h-full min-h-[104px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border p-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-colors ${theme.border} ${theme.background}`}>
+      <div className={`absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent ${theme.rim} to-transparent`} />
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[10px] font-bold uppercase tracking-[0.13em] text-slate-200">{label}</p>
-        <Icon className="h-4 w-4 shrink-0 text-[#FFD54F]" />
+        <p className={`truncate text-xs font-semibold uppercase tracking-wider ${theme.accent}`}>{label}</p>
+        <Icon className={`h-4 w-4 shrink-0 ${theme.accent}`} />
       </div>
-      <p className="mt-auto pt-3 font-mono text-xl font-bold tracking-tight text-white">{value}</p>
+      <p className={`mt-auto pt-3 font-mono text-2xl font-bold tracking-tight ${negativeValue ? 'text-rose-400' : 'text-white'}`}>{value}</p>
     </article>
   );
 }
@@ -223,31 +262,32 @@ export default function DashboardOverview() {
                   label="Today&apos;s Sales"
                   value={formatNpr(summary.totalSales)}
                   icon={ReceiptText}
-                  tone="via-[#FFD54F]"
+                  theme="sales"
                 />
                 <KpiCard
                   label="Cash Payments"
                   value={formatNpr(summary.cashInflow)}
                   icon={Banknote}
-                  tone="via-[#FFB300]"
+                  theme="cash"
                 />
                 <KpiCard
                   label="QR Payments"
                   value={formatNpr(summary.digitalInflow)}
                   icon={CreditCard}
-                  tone="via-[#FF6D00]"
+                  theme="qr"
                 />
                 <KpiCard
                   label="Today&apos;s Expenses"
                   value={formatNpr(summary.totalExpenses)}
                   icon={CircleDollarSign}
-                  tone="via-[#F4511E]"
+                  theme="expenses"
                 />
                 <KpiCard
                   label="Net Profit"
                   value={formatNpr(netProfit)}
                   icon={TrendingUp}
-                  tone={netProfit >= 0 ? 'via-[#10B981]' : 'via-[#F4511E]'}
+                  theme="profit"
+                  negativeValue={netProfit < 0}
                 />
               </section>
 

@@ -1,0 +1,47 @@
+UI ENHANCEMENT: Apply Distinct Color Theming to Overview KPI Metric Cards
+
+Update the 5 KPI metric cards in `artifacts/bakery-pos/src/pages/dashboard-overview.tsx` to give each card a distinct visual identity using subtle tinted borders, glowing accent backgrounds, and matching title/icon colors:
+
+1. Thematic Palette per Card:
+- Card 1: TODAY'S SALES
+  - Card Border: `border-amber-500/40 hover:border-amber-500/70`
+  - Background Tint: Subtle top glow using `bg-gradient-to-b from-amber-500/10 via-[#14161B] to-[#14161B]`
+  - Title Text: `text-amber-400 font-semibold tracking-wider text-xs`
+  - Icon: Receipt icon with `text-amber-400`
+  - Metric Value: Crisp bold white (`text-white font-bold text-2xl`)
+
+- Card 2: CASH PAYMENTS
+  - Card Border: `border-emerald-500/40 hover:border-emerald-500/70`
+  - Background Tint: Subtle top glow using `bg-gradient-to-b from-emerald-500/10 via-[#14161B] to-[#14161B]`
+  - Title Text: `text-emerald-400 font-semibold tracking-wider text-xs`
+  - Icon: Cash icon with `text-emerald-400`
+  - Metric Value: Crisp bold white (`text-white font-bold text-2xl`)
+
+- Card 3: QR PAYMENTS
+  - Card Border: `border-cyan-500/40 hover:border-cyan-500/70`
+  - Background Tint: Subtle top glow using `bg-gradient-to-b from-cyan-500/10 via-[#14161B] to-[#14161B]`
+  - Title Text: `text-cyan-400 font-semibold tracking-wider text-xs`
+  - Icon: Card/QR icon with `text-cyan-400`
+  - Metric Value: Crisp bold white (`text-white font-bold text-2xl`)
+
+- Card 4: TODAY'S EXPENSES
+  - Card Border: `border-rose-500/40 hover:border-rose-500/70`
+  - Background Tint: Subtle top glow using `bg-gradient-to-b from-rose-500/10 via-[#14161B] to-[#14161B]`
+  - Title Text: `text-rose-400 font-semibold tracking-wider text-xs`
+  - Icon: Outflow/Expense icon with `text-rose-400`
+  - Metric Value: Crisp bold white (`text-white font-bold text-2xl`)
+
+- Card 5: NET PROFIT
+  - Card Border: `border-purple-500/40 hover:border-purple-500/70`
+  - Background Tint: Subtle top glow using `bg-gradient-to-b from-purple-500/10 via-[#14161B] to-[#14161B]`
+  - Title Text: `text-purple-400 font-semibold tracking-wider text-xs`
+  - Icon: Trending icon with `text-purple-400`
+  - Metric Value: Crisp bold white (`text-white font-bold text-2xl`) if >= 0, or `text-rose-400` if negative.
+
+2. Structure & Padding:
+- Retain the exact existing layout, border-radius (`rounded-2xl`), uniform card heights, and internal padding.
+- Keep all subtexts clean and removed as previously configured.
+
+3. Verification:
+- Run `npm run typecheck` and verify production build completes with zero errors.
+- Restart the Bakery POS workflow.
