@@ -157,23 +157,17 @@ export default function UnifiedMenuWorkspace() {
 
   return (
     <div className="min-h-full bg-[#0E0F12]">
-      <main className="mx-auto min-h-full w-full max-w-6xl space-y-6">
+      <main className="mx-auto min-h-full w-full max-w-6xl space-y-4">
         <header>
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Catalog control</p>
-              <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Menu Management</h1>
-              <p className="mt-2 max-w-xl text-sm text-[#94A3B8]">Create and maintain the products and prices shown on the register.</p>
-            </div>
-            <div className="font-mono text-xs text-[#64748B]">{items.length} {items.length === 1 ? 'item' : 'items'} · {categories.length} {categories.length === 1 ? 'category' : 'categories'}</div>
-          </div>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#FFB300]">Catalog control</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Menu Management</h1>
         </header>
 
         <section aria-label="Catalog summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <ExecutiveKpiCard label="Total Catalog Items" value={String(items.length)} detail="Unique products" icon={ShoppingBag} tone="via-[#FFD54F]" />
-          <ExecutiveKpiCard label="Active Categories" value={String(activeCategoryCount)} detail={`${categories.length} total categories`} icon={Tags} tone="via-[#FFB300]" />
-          <ExecutiveKpiCard label="Per-Piece Items" value={String(pieceItemCount)} detail="Fixed-price products" icon={Boxes} tone="via-[#FF6D00]" />
-          <ExecutiveKpiCard label="Cakes / Weight Items" value={String(weightItemCount)} detail="Tiered products" icon={Scale} tone="via-[#F4511E]" />
+          <ExecutiveKpiCard label="Total Catalog Items" value={String(items.length)} icon={ShoppingBag} theme="amber" />
+          <ExecutiveKpiCard label="Active Categories" value={String(activeCategoryCount)} icon={Tags} theme="cyan" />
+          <ExecutiveKpiCard label="Per-Piece Items" value={String(pieceItemCount)} icon={Boxes} theme="emerald" />
+          <ExecutiveKpiCard label="Cakes / Weight Items" value={String(weightItemCount)} icon={Scale} theme="purple" />
         </section>
 
         <section aria-label="Catalog actions" className="flex flex-col gap-4 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 shadow-[0_12px_35px_rgba(0,0,0,0.2)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
