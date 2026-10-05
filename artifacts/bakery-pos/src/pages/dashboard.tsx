@@ -74,6 +74,8 @@ const registerTilePalettes = [
   },
 ] as const;
 
+const roundCurrency = (amount: number) => Math.round((amount + Number.EPSILON) * 100) / 100;
+
 function getRegisterUnitLabel(isPiece: boolean, tier: MenuItemTier | null) {
   if (isPiece) return '(per piece)';
   if (tier?.weightLb !== null && tier?.weightLb !== undefined) {
@@ -218,15 +220,23 @@ export default function Dashboard() {
     });
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
+  const subtotal = cart.reduce(
+    (acc, item) => roundCurrency(acc + roundCurrency(item.unitPrice * item.quantity)),
+    0,
+  );
   const discountAmount = useMemo(() => {
     if (!appliedDiscount) return 0;
     if (appliedDiscount.mode === 'percentage') {
-      return Math.min(subtotal, Math.max(0, subtotal * Math.min(100, Math.max(0, appliedDiscount.value)) / 100));
+      return roundCurrency(Math.min(subtotal, Math.max(0, subtotal * Math.min(100, Math.max(0, appliedDiscount.value)) / 100)));
     }
-    return Math.min(subtotal, Math.max(0, appliedDiscount.value));
+    return roundCurrency(Math.min(subtotal, Math.max(0, appliedDiscount.value)));
   }, [appliedDiscount, subtotal]);
-  const total = Math.max(0, subtotal - discountAmount);
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+  const vatRate = storeSettings.vat.vatRate;
+  const vatAmount = storeSettings.vat.enableVat && vatRate > 0
+    ? Math.round(discountedSubtotal * (vatRate / 100) * 100) / 100
+    : 0;
+  const total = roundCurrency(discountedSubtotal + vatAmount);
 
   const handleApplyDiscount = () => {
     const value = Number(discountInput);
@@ -283,6 +293,7 @@ export default function Dashboard() {
           quantity: item.quantity,
         })),
         discount: appliedDiscount || undefined,
+        vat: storeSettings.vat,
         paymentMethod: method,
         cashReceived: method === 'cash' ? cashReceived : undefined,
         referenceId: method === 'qr' ? referenceId : undefined,
@@ -301,6 +312,8 @@ export default function Dashboard() {
         })),
         subtotal,
         discountAmount,
+        vatAmount: result.vatAmount,
+        vatRate: result.vatRate,
         total: result.total,
         paymentMethod: method,
         cashReceived: method === 'cash' ? cashReceived : null,
@@ -583,10 +596,12 @@ export default function Dashboard() {
                   <span>- NPR {discountAmount.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm text-[#E2E8F0] font-mono">
-                <span className="font-sans">Tax (0%)</span>
-                <span>NPR 0.00</span>
-              </div>
+              {storeSettings.vat.enableVat && vatRate > 0 && vatAmount > 0 && (
+                <div className="flex justify-between text-sm text-[#E2E8F0] font-mono">
+                  <span className="font-sans">VAT ({vatRate}%)</span>
+                  <span>NPR {vatAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="h-px w-full bg-gradient-to-r from-[#FF6D00]/40 to-transparent my-3" />
               <div className="flex justify-between items-end pb-2">
                 <span className="text-sm font-bold text-[#E2E8F0] uppercase tracking-wider">Total</span>

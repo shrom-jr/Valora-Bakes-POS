@@ -10,6 +10,7 @@ import {
   ExpenseRecord,
   getDateKey,
   MenuItem,
+  normalizeVatSettings,
   SaleRecord,
   ShelfInventory,
   StoreSettings,
@@ -401,6 +402,7 @@ export function useStoreSettings() {
             ...defaultStoreSettings.receipt,
             ...(value.receipt || {}),
           },
+          vat: normalizeVatSettings(value.vat),
         });
         setLoading(false);
       },

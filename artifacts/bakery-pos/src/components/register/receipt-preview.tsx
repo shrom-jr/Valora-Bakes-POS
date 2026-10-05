@@ -16,6 +16,8 @@ export interface ReceiptPayload {
   items: ReceiptItem[];
   subtotal: number;
   discountAmount: number;
+  vatAmount: number;
+  vatRate: number;
   total: number;
   paymentMethod: SalePaymentMethod;
   cashReceived: number | null;
@@ -91,6 +93,9 @@ export default function ReceiptPreview({ receipt, profile, width }: ReceiptPrevi
       <div className="thermal-receipt-totals mt-3 border-t border-black pt-2 font-mono">
         <div className="flex justify-between gap-3"><span>Subtotal</span><span>{formatNpr(receipt.subtotal)}</span></div>
         {receipt.discountAmount > 0 && <div className="mt-1 flex justify-between gap-3"><span>Discount</span><span>- {formatNpr(receipt.discountAmount)}</span></div>}
+        {receipt.vatAmount > 0 && receipt.vatRate > 0 && (
+          <div className="mt-1 flex justify-between gap-3"><span>VAT ({receipt.vatRate}%)</span><span>{formatNpr(receipt.vatAmount)}</span></div>
+        )}
         <div className="mt-2 flex justify-between gap-3 text-sm font-bold"><span>Grand Total</span><span>{formatNpr(receipt.total)}</span></div>
         <div className="mt-2 flex justify-between gap-3"><span>Tender</span><span>{receipt.paymentMethod === 'cash' ? 'Cash' : 'QR Standee'}</span></div>
         {receipt.paymentMethod === 'cash' && (

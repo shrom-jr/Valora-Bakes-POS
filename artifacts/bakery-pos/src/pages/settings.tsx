@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/auth-context';
 import { useStoreSettings } from '@/hooks/use-rtdb';
-import { ReceiptWidth, StoreProfile, updateCustomerCredit, updateReceiptWidth, updateStoreProfile } from '@/lib/rtdb';
+import { ReceiptWidth, StoreProfile, updateCustomerCredit, updateReceiptWidth, updateStoreProfile, updateVatSettings } from '@/lib/rtdb';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,6 +29,9 @@ export default function SettingsPage() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [creditSaving, setCreditSaving] = useState(false);
   const [receiptSaving, setReceiptSaving] = useState(false);
+  const [vatSaving, setVatSaving] = useState(false);
+  const [vatEnabledDraft, setVatEnabledDraft] = useState(false);
+  const [vatRateDraft, setVatRateDraft] = useState('13');
   const [accountName, setAccountName] = useState(user?.displayName || '');
   const [accountEmail, setAccountEmail] = useState(user?.email || '');
   const [newPassword, setNewPassword] = useState('');
@@ -39,6 +42,11 @@ export default function SettingsPage() {
   useEffect(() => {
     setProfile(settings.profile);
   }, [settings.profile]);
+
+  useEffect(() => {
+    setVatEnabledDraft(settings.vat.enableVat);
+    setVatRateDraft(String(settings.vat.vatRate));
+  }, [settings.vat]);
 
   useEffect(() => {
     setAccountName(user?.displayName || '');
@@ -76,6 +84,27 @@ export default function SettingsPage() {
       toast({ title: 'Feature setting not saved', description: err?.message || 'Could not update customer credit.', variant: 'destructive' });
     } finally {
       setCreditSaving(false);
+    }
+  };
+
+  const saveVat = async () => {
+    const vatRate = Number(vatRateDraft);
+    if (!vatRateDraft.trim() || !Number.isFinite(vatRate) || vatRate < 0 || vatRate > 100) {
+      toast({ title: 'Invalid VAT rate', description: 'Enter a VAT rate between 0 and 100%.', variant: 'destructive' });
+      return;
+    }
+
+    setVatSaving(true);
+    try {
+      await updateVatSettings({ enableVat: vatEnabledDraft, vatRate });
+      toast({
+        title: 'VAT settings saved',
+        description: vatEnabledDraft ? `VAT is enabled at ${vatRate}%.` : 'VAT is disabled for counter bills and receipts.',
+      });
+    } catch (err: any) {
+      toast({ title: 'VAT settings not saved', description: err?.message || 'Could not update VAT settings.', variant: 'destructive' });
+    } finally {
+      setVatSaving(false);
     }
   };
 
@@ -256,6 +285,46 @@ export default function SettingsPage() {
                     <p className="mt-1 text-xs leading-5 text-[#94A3B8]">Readiness toggle only. The register continues to process Cash and QR while credit workflows remain dormant.</p>
                   </div>
                   <Switch checked={settings.features.customerCredit} disabled={creditSaving} onCheckedChange={toggleCredit} aria-label="Customer Credit / Udharo System" />
+                </div>
+                <div className="mt-4 rounded-xl border border-[#2A2D35] bg-[#0E0F12] p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-white">Enable VAT</p>
+                      <p className="mt-1 text-xs leading-5 text-[#94A3B8]">Automatically calculate and add VAT to counter bills and receipts.</p>
+                    </div>
+                    <Switch
+                      checked={vatEnabledDraft}
+                      disabled={vatSaving}
+                      onCheckedChange={setVatEnabledDraft}
+                      aria-label="Enable VAT"
+                    />
+                  </div>
+                  {vatEnabledDraft && (
+                    <div className="mt-4 max-w-xs">
+                      <label htmlFor="vat-rate" className="mb-2 block text-xs font-semibold text-slate-200">VAT Rate (%)</label>
+                      <Input
+                        id="vat-rate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={vatRateDraft}
+                        disabled={vatSaving}
+                        onChange={(event) => setVatRateDraft(event.target.value)}
+                        className="border-[#2A2D35] bg-[#14161B] text-white"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={() => void saveVat()}
+                      disabled={vatSaving}
+                      className="border-none bg-gradient-to-r from-[#FFB300] via-[#FF6D00] to-[#F4511E] font-bold text-white hover:brightness-110"
+                    >
+                      <Save className="mr-2 h-4 w-4" /> {vatSaving ? 'Saving…' : 'Save VAT Settings'}
+                    </Button>
+                  </div>
                 </div>
               </article>
 

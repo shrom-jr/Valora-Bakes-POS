@@ -1,0 +1,51 @@
+FEATURE: Move VAT to Store Settings with Default OFF & Remove Register Tax (0%) Clutter
+
+Implement a configurable VAT setting in Store Settings and eliminate the hardcoded "Tax (0%)" row from the Counter Register checkout panel:
+
+================================================================================
+1. STORE SETTINGS CONFIGURATION (`settings.tsx` / RTDB `settings/`)
+================================================================================
+- Add VAT configuration controls to Store Settings (in the "Feature Toggles" section or a dedicated "VAT & Taxation" card):
+  - Toggle Switch: "Enable VAT" (Default: OFF / false).
+  - Number Input: "VAT Rate (%)" (Default: 13, step 0.1 or 1, visible or editable when enabled).
+  - Helper label: "Automatically calculate and add VAT to counter bills and receipts."
+- Persist these values to Firebase Realtime Database under `settings/vat` (or within the existing store settings object):
+  `{ enableVat: boolean, vatRate: number }`
+- Hook it into the app's shared settings context/listener so changes take effect immediately across all screens without reloading.
+
+================================================================================
+2. COUNTER REGISTER CHECKOUT PANEL (`counter-register.tsx`)
+================================================================================
+- Remove the hardcoded "Tax (0%)" line.
+- Dynamic Conditional Rendering:
+  - If `enableVat` is FALSE (default):
+    - Completely HIDE the VAT/Tax row. Do NOT render any line for VAT/Tax when it is disabled or 0%.
+    - The summary should cleanly show only:
+      - Subtotal: `NPR XX.XX`
+      - (Discount row if applied): `- NPR XX.XX`
+      - TOTAL: `NPR XX.XX` (equal to Subtotal minus Discount).
+  - If `enableVat` is TRUE:
+    - Label strictly as "VAT ({vatRate}%)" (NEVER use the word "Tax").
+    - Calculate `vatAmount = Math.round((subtotal - discount) * (vatRate / 100) * 100) / 100`.
+    - Total = `(subtotal - discount) + vatAmount`.
+    - Render in crisp text:
+      `VAT ({vatRate}%)          NPR {vatAmount}`
+
+================================================================================
+3. BILL CREATION & THERMAL PRINT INTEGRATION
+================================================================================
+- In the checkout/settlement handler:
+  - When saving completed bills to RTDB (`bills/`):
+    - If VAT is enabled: save `vatAmount` and `vatRate`.
+    - If VAT is disabled: omit or set `vatAmount: 0`.
+  - When generating receipt lines:
+    - Print the "VAT ({vatRate}%)" line ONLY if `enableVat` is true and `vatAmount > 0`.
+    - If disabled, do not print any tax/VAT line on the thermal paper.
+
+================================================================================
+4. VERIFICATION
+================================================================================
+- Run `npm run typecheck` and production build to confirm zero TypeScript errors.
+- Verify that on initial load, the Counter Register checkout sidebar has NO "Tax (0%)" row.
+- Verify that turning VAT ON in Settings and setting 13% correctly displays "VAT (13%)" and calculates the total on the register.
+- Restart the Bakery POS workflow.

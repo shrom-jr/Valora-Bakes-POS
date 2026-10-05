@@ -62,6 +62,8 @@ export interface SaleRecord {
   items: SaleRecordItem[];
   subtotal: number;
   discount: { mode: 'flat' | 'percentage'; value: number; amount: number } | null;
+  vatAmount?: number;
+  vatRate?: number;
   total: number;
   paymentMethod: SalePaymentMethod;
   cashReceived: number | null;
@@ -105,9 +107,15 @@ export interface StoreSettings {
   features: {
     customerCredit: boolean;
   };
+  vat: VatSettings;
   receipt: {
     width: ReceiptWidth;
   };
+}
+
+export interface VatSettings {
+  enableVat: boolean;
+  vatRate: number;
 }
 
 export interface ExpenseRecord {
@@ -129,6 +137,7 @@ export interface CompleteSaleInput {
     mode: 'flat' | 'percentage';
     value: number;
   };
+  vat: VatSettings;
   paymentMethod: SalePaymentMethod;
   cashReceived?: number;
   referenceId?: string;
@@ -140,6 +149,8 @@ export interface CompleteSaleResult {
   saleId: string;
   subtotal: number;
   discountAmount: number;
+  vatAmount: number;
+  vatRate: number;
   total: number;
   changeDue: number;
 }
@@ -160,7 +171,25 @@ export const defaultStoreSettings: StoreSettings = {
   receipt: {
     width: '80mm',
   },
+  vat: {
+    enableVat: false,
+    vatRate: 13,
+  },
 };
+
+export function normalizeVatSettings(value: unknown): VatSettings {
+  const candidate = value && typeof value === 'object'
+    ? value as Partial<VatSettings>
+    : {};
+  const rate = candidate.vatRate;
+
+  return {
+    enableVat: candidate.enableVat === true,
+    vatRate: typeof rate === 'number' && Number.isFinite(rate) && rate >= 0 && rate <= 100
+      ? rate
+      : defaultStoreSettings.vat.vatRate,
+  };
+}
 const emptyDailySummary = (): DailySummary => ({
   totalSales: 0,
   orderCount: 0,
@@ -197,6 +226,14 @@ export async function updateCustomerCredit(enabled: boolean) {
 export async function updateReceiptWidth(width: ReceiptWidth) {
   if (!database) throw new Error('Database not initialized');
   await update(ref(database), { 'settings/receipt/width': width });
+}
+
+export async function updateVatSettings(vat: VatSettings) {
+  if (!database) throw new Error('Database not initialized');
+  if (!Number.isFinite(vat.vatRate) || vat.vatRate < 0 || vat.vatRate > 100) {
+    throw new Error('VAT rate must be between 0 and 100.');
+  }
+  await update(ref(database), { 'settings/vat': vat });
 }
 
 // Write Helpers
@@ -415,6 +452,9 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
   if (input.items.some((item) => !Number.isInteger(item.quantity) || item.quantity <= 0)) {
     throw new Error('Sale quantities must be positive whole numbers');
   }
+  if (!Number.isFinite(input.vat.vatRate) || input.vat.vatRate < 0 || input.vat.vatRate > 100) {
+    throw new Error('VAT rate must be between 0 and 100.');
+  }
   if (input.paymentMethod === 'cash' && (!Number.isFinite(input.cashReceived) || (input.cashReceived || 0) < 0)) {
     throw new Error('Cash received must be a valid amount');
   }
@@ -445,6 +485,12 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
     // Return initialized data instead of aborting; when the server value arrives,
     // Firebase retries this callback with the current database contents.
     if (!rootData) return current;
+
+    const vatSettings = normalizeVatSettings(current.settings?.vat);
+    if (vatSettings.enableVat !== input.vat.enableVat || vatSettings.vatRate !== input.vat.vatRate) {
+      failureReason = 'VAT settings changed while this order was open. Review the total and try again.';
+      return undefined;
+    }
 
     const menuItems = current.menuItems || {};
     const saleItems: SaleRecordItem[] = [];
@@ -502,7 +548,11 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
         ? roundCurrency(subtotal * Math.min(100, Math.max(0, discountValue)) / 100)
         : roundCurrency(Math.min(subtotal, Math.max(0, discountValue)))
       : 0;
-    const total = roundCurrency(Math.max(0, subtotal - discountAmount));
+    const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+    const vatAmount = vatSettings.enableVat && vatSettings.vatRate > 0
+      ? Math.round(discountedSubtotal * (vatSettings.vatRate / 100) * 100) / 100
+      : 0;
+    const total = roundCurrency(discountedSubtotal + vatAmount);
     const cashReceived = input.paymentMethod === 'cash' ? roundCurrency(input.cashReceived || 0) : 0;
 
     if (input.paymentMethod === 'cash' && cashReceived < total) {
@@ -550,6 +600,8 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
       discount: input.discount
         ? { mode: input.discount.mode, value: discountValue, amount: discountAmount }
         : null,
+      vatAmount: vatSettings.enableVat ? vatAmount : 0,
+      ...(vatSettings.enableVat ? { vatRate: vatSettings.vatRate } : {}),
       total,
       paymentMethod: input.paymentMethod,
       cashReceived: input.paymentMethod === 'cash' ? cashReceived : null,
@@ -575,6 +627,8 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompleteSa
     saleId,
     subtotal: savedSale.subtotal,
     discountAmount: savedSale.discount?.amount || 0,
+    vatAmount: savedSale.vatAmount || 0,
+    vatRate: savedSale.vatRate || 0,
     total: savedSale.total,
     changeDue: savedSale.changeDue || 0,
   };
