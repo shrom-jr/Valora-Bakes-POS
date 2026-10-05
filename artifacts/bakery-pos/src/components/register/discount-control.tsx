@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Pencil, Percent, Tag, X } from 'lucide-react';
+import { Check, Pencil, Tag, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -46,22 +46,23 @@ export default function DiscountControl({
               <Tag className="h-3.5 w-3.5" />
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-[#E2E8F0]">Discount applied</p>
-              <p className="font-mono text-xs text-[#6EE7B7]">-{formatNpr(appliedAmount)}</p>
+              <p data-testid="text-discount-status" className="text-xs font-semibold text-[#E2E8F0]">Discount applied</p>
+              <p data-testid="text-discount-applied-amount" className="font-mono text-xs text-[#6EE7B7]">-{formatNpr(appliedAmount)}</p>
             </div>
           </div>
         ) : (
-          <span className="text-xs text-[#64748B]">No discount applied</span>
+          <span data-testid="text-discount-status" className="text-xs font-medium text-slate-300">No discount applied</span>
         )}
         <Button
           type="button"
           variant="ghost"
           disabled={disabled}
           onClick={() => onOpenChange(true)}
-          className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-bold text-[#FFD54F] hover:bg-[#FFB300]/10 hover:text-white"
+          data-testid={hasAppliedDiscount ? 'button-edit-discount' : 'button-add-discount'}
+          className="min-h-9 shrink-0 gap-1.5 rounded-lg px-2 text-sm font-semibold text-amber-400 hover:bg-[#FFB300]/10 hover:text-amber-300"
         >
           {hasAppliedDiscount ? <Pencil className="h-3.5 w-3.5" /> : <Tag className="h-3.5 w-3.5" />}
-          {hasAppliedDiscount ? 'Edit' : '+ Discount'}
+          {hasAppliedDiscount ? 'Edit' : 'Add discount'}
         </Button>
       </div>
     );
@@ -75,17 +76,15 @@ export default function DiscountControl({
             <Tag className="h-4 w-4 text-[#FFD54F]" />
             <p className="text-sm font-bold text-white">{hasAppliedDiscount ? 'Edit discount' : 'Add discount'}</p>
           </div>
-          <p className="mt-1 text-[11px] leading-4 text-[#94A3B8]">
-            Discount is capped at the current subtotal of <span className="font-mono text-[#CBD5E1]">{formatNpr(subtotal)}</span>.
-          </p>
         </div>
         <Button
           type="button"
           variant="ghost"
           size="icon"
           aria-label="Close discount editor"
+          data-testid="button-close-discount"
           onClick={() => onOpenChange(false)}
-          className="h-8 w-8 shrink-0 rounded-lg text-[#64748B] hover:bg-[#2A2D35] hover:text-white"
+          className="h-8 w-8 shrink-0 rounded-lg text-slate-200 hover:bg-[#2A2D35] hover:text-white"
         >
           <X className="h-4 w-4" />
         </Button>
@@ -96,11 +95,12 @@ export default function DiscountControl({
           type="button"
           disabled={disabled}
           aria-pressed={discountMode === 'flat'}
+          data-testid="button-discount-mode-flat"
           onClick={() => onDiscountModeChange('flat')}
-          className={`min-h-10 rounded-md px-3 text-xs font-bold transition ${
+          className={`min-h-10 rounded-md border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
             discountMode === 'flat'
-              ? 'bg-[#FF6D00]/20 text-[#FFD54F] shadow-[inset_0_0_0_1px_rgba(255,109,0,0.35)]'
-              : 'text-[#94A3B8] hover:bg-[#2A2D35] hover:text-white'
+              ? 'border-amber-500 bg-amber-500/20 font-bold text-amber-300'
+              : 'border-transparent bg-transparent font-medium text-slate-200 hover:text-white'
           }`}
         >
           Flat NPR
@@ -109,11 +109,12 @@ export default function DiscountControl({
           type="button"
           disabled={disabled}
           aria-pressed={discountMode === 'percentage'}
+          data-testid="button-discount-mode-percentage"
           onClick={() => onDiscountModeChange('percentage')}
-          className={`min-h-10 rounded-md px-3 text-xs font-bold transition ${
+          className={`min-h-10 rounded-md border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
             discountMode === 'percentage'
-              ? 'bg-[#FF6D00]/20 text-[#FFD54F] shadow-[inset_0_0_0_1px_rgba(255,109,0,0.35)]'
-              : 'text-[#94A3B8] hover:bg-[#2A2D35] hover:text-white'
+              ? 'border-amber-500 bg-amber-500/20 font-bold text-amber-300'
+              : 'border-transparent bg-transparent font-medium text-slate-200 hover:text-white'
           }`}
         >
           Percentage %
@@ -132,39 +133,38 @@ export default function DiscountControl({
             onChange={(event) => onInputValueChange(event.target.value)}
             disabled={disabled}
             aria-label={`Discount amount in ${modeLabel}`}
+            data-testid="input-discount-amount"
             placeholder="0.00"
-            className="h-11 border-[#2A2D35] bg-[#14161B] pr-12 font-mono text-white focus-visible:ring-[#FF6D00]"
+            className="h-11 border-[#2A2D35] bg-[#14161B] pr-12 font-mono text-base font-bold text-white focus-visible:ring-[#FF6D00]"
           />
-          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-[#64748B]">{modeLabel}</span>
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-semibold text-slate-200">{modeLabel}</span>
         </div>
         <Button
           type="button"
           disabled={disabled || !inputValue}
           onClick={onApply}
-          className="h-11 shrink-0 border-none bg-[#FF6D00] px-4 font-bold text-white hover:bg-[#F4511E]"
+          data-testid="button-apply-discount"
+          className="h-11 shrink-0 border-none bg-gradient-to-r from-amber-500 to-orange-500 px-4 font-bold text-white hover:brightness-110"
         >
           <Check className="h-4 w-4" />
           Apply
         </Button>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-[11px] text-[#64748B]">
-          <Percent className="h-3 w-3 text-[#FFB300]" />
-          {discountMode === 'percentage' ? 'Enter 0–100 percent.' : 'Enter a flat NPR amount.'}
-        </p>
-        {hasAppliedDiscount && (
+      {hasAppliedDiscount && (
+        <div className="mt-3 flex justify-end">
           <Button
             type="button"
             variant="ghost"
             disabled={disabled}
             onClick={onRemove}
+            data-testid="button-remove-discount"
             className="h-8 shrink-0 px-2 text-xs font-bold text-[#FF8A65] hover:bg-[#F4511E]/10 hover:text-[#FFB39D]"
           >
             Remove
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

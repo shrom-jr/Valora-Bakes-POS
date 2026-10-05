@@ -544,21 +544,45 @@ export default function Dashboard() {
                 {cart.map(cartItem => (
                   <div key={cartItem.cartItemId} className="bg-[#14161B] p-3 rounded-xl border border-[#2A2D35] flex items-center justify-between group">
                     <div className="flex-1 flex flex-col min-w-0 pr-2">
-                      <span className="text-white font-bold truncate">{cartItem.name}</span>
+                      <span data-testid={`text-cart-item-name-${cartItem.cartItemId}`} className="text-white font-bold truncate">{cartItem.name}</span>
                       <div className="flex items-center gap-2">
                         {cartItem.tierLabel && <span className="text-xs text-[#FFB300] bg-[#FFB300]/10 px-1.5 rounded">{cartItem.tierLabel}</span>}
-                        <span className="text-sm font-mono text-[#94A3B8]">NPR {cartItem.unitPrice.toFixed(2)}</span>
+                        <span data-testid={`text-cart-item-price-${cartItem.cartItemId}`} className="text-sm font-mono font-semibold text-slate-200">NPR {cartItem.unitPrice.toFixed(2)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[#94A3B8] hover:text-white hover:bg-[#2A2D35]" onClick={() => decrementQuantity(cartItem.cartItemId)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Decrease quantity of ${cartItem.name}`}
+                        data-testid={`button-decrease-quantity-${cartItem.cartItemId}`}
+                        className="h-8 w-8 text-slate-200 hover:text-white hover:bg-[#2A2D35]"
+                        onClick={() => decrementQuantity(cartItem.cartItemId)}
+                      >
                         <Minus className="w-3 h-3" />
                       </Button>
-                      <span className="font-mono font-bold text-white w-6 text-center">{cartItem.quantity}</span>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[#94A3B8] hover:text-white hover:bg-[#2A2D35]" onClick={() => incrementQuantity(cartItem.cartItemId)}>
+                      <span data-testid={`text-cart-item-quantity-${cartItem.cartItemId}`} className="w-6 text-center font-mono font-bold text-white">{cartItem.quantity}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Increase quantity of ${cartItem.name}`}
+                        data-testid={`button-increase-quantity-${cartItem.cartItemId}`}
+                        className="h-8 w-8 text-slate-200 hover:text-white hover:bg-[#2A2D35]"
+                        onClick={() => incrementQuantity(cartItem.cartItemId)}
+                      >
                         <Plus className="w-3 h-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 shrink-0 ml-1" onClick={() => removeFromCart(cartItem.cartItemId)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remove ${cartItem.name} from cart`}
+                        data-testid={`button-remove-cart-item-${cartItem.cartItemId}`}
+                        className="ml-1 h-8 w-8 shrink-0 text-[#FF8A65] hover:bg-[#F4511E]/10 hover:text-[#FFB39D]"
+                        onClick={() => removeFromCart(cartItem.cartItemId)}
+                      >
                         <X className="w-4 h-4" />
                       </Button>
                     </div>

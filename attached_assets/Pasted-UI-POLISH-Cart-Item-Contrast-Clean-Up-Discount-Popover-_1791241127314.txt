@@ -1,0 +1,46 @@
+UI POLISH: Cart Item Contrast, Clean Up Discount Popover & Replace Muted Gray Text
+
+Update the cart sidebar and discount controls in `artifacts/bakery-pos/src/pages/counter-register.tsx` to fix typography contrast and remove unnecessary clutter:
+
+================================================================================
+1. CART ITEM LIST TYPOGRAPHY
+================================================================================
+- In the active cart item row (e.g. Muffin):
+  - The item price ("NPR 500.00") is currently dim gray.
+  - Update the item price to crisp, high-contrast readable styling:
+    `text-slate-200 font-semibold text-sm` (or `text-white font-bold text-sm`).
+  - Ensure quantity buttons (`-`, `+`) and delete icon (`✕`) are clear and easily visible.
+
+================================================================================
+2. DISCOUNT TRIGGER ROW (CLOSED STATE)
+================================================================================
+- Button Label:
+  - Change from: "+ Discount"
+  - Change to: "Add discount"
+  - Styling: High-contrast interactive accent (`text-amber-400 hover:text-amber-300 font-semibold text-sm flex items-center gap-1.5`).
+- Status Text:
+  - "No discount applied" is currently dark, muddy gray.
+  - Update to crisp, legible text: `text-slate-300 font-medium text-xs`.
+
+================================================================================
+3. DISCOUNT POPOVER / EXPANDED CARD
+================================================================================
+- Remove Redundant Disclaimer:
+  - Completely delete the line: "Discount is capped at the current subtotal of NPR 500.00".
+- Tab Buttons ("Flat NPR" vs "Percentage %"):
+  - Active Tab: High-visibility solid amber/orange fill (`bg-amber-500/20 border border-amber-500 text-amber-300 font-bold`).
+  - Inactive Tab: Clear, high-contrast text (`text-slate-200 hover:text-white bg-transparent font-medium`). No dark washed-out gray.
+- Amount Input & Currency Label:
+  - Input field value: Crisp white text (`text-white font-bold text-base`).
+  - Currency suffix ("NPR"): Bright readable slate (`text-slate-200 font-semibold`).
+- Bottom Helper Text:
+  - Remove the "% Enter a flat NPR amount." line completely (it adds visual noise and is self-explanatory).
+- Apply Button:
+  - Keep the vibrant solid CTA (`bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold`).
+
+================================================================================
+4. VERIFICATION
+================================================================================
+- Run `npm run typecheck` and production build to confirm zero errors.
+- Confirm cart item prices, discount labels, and tabs are crisp, legible, and completely free of muddy gray styling.
+- Restart the Bakery POS workflow.
