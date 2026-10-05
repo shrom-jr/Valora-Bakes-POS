@@ -422,7 +422,7 @@ export default function Dashboard() {
           </div>
 
           {/* Category Ribbon */}
-          <div className="p-4 border-b border-[#FF6D00]/10 flex gap-2 overflow-x-auto no-scrollbar touch-pan-x shrink-0">
+          <div className="p-4 border-b border-[#FF6D00]/10 flex gap-2 overflow-x-auto touch-pan-x shrink-0">
             <button
               onClick={() => setActiveCategoryId('all')}
               className={`min-h-10 shrink-0 rounded-full px-4 py-2 font-bold tracking-wide transition-all active:scale-[0.98] ${

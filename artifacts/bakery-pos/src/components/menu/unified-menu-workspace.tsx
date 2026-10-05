@@ -221,7 +221,7 @@ export default function UnifiedMenuWorkspace() {
         </section>
 
         <section aria-label="Catalog actions" className="flex flex-col gap-4 rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 shadow-[0_12px_35px_rgba(0,0,0,0.2)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
             <Button
               type="button"
               onClick={() => setSelectedCategory('all')}

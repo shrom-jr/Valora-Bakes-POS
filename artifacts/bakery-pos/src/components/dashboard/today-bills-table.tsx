@@ -39,7 +39,7 @@ export default function TodayBillsTable({ bills, onVoid, voidingSaleId }: TodayB
   }
 
   return (
-    <div className="dashboard-scrollbar overflow-x-auto rounded-xl border border-[#2A2D35] bg-[#0E0F12] [touch-action:pan-x]">
+    <div className="overflow-x-auto rounded-xl border border-[#2A2D35] bg-[#0E0F12] [touch-action:pan-x]">
       <table className="w-full min-w-[760px] border-collapse text-left">
         <caption className="sr-only">Today&apos;s bills</caption>
         <thead>

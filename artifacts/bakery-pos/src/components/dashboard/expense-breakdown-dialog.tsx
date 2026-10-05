@@ -36,7 +36,7 @@ export default function ExpenseBreakdownDialog({
         </section>
         <section aria-label="Itemized log">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Itemized log</h3>
-          <div className="dashboard-scrollbar mt-2 overflow-x-auto rounded-xl border border-[#2A2D35] bg-[#0E0F12]">
+          <div className="mt-2 overflow-x-auto rounded-xl border border-[#2A2D35] bg-[#0E0F12]">
             <table className="w-full min-w-[620px] border-collapse text-left text-xs">
               <thead>
                 <tr className="border-b border-[#FF6D00]/15 bg-[#14161B] text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">

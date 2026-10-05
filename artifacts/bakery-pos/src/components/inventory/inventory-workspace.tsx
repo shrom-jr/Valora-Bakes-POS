@@ -191,7 +191,7 @@ export default function InventoryWorkspace() {
           <ExecutiveKpiCard label="Sold Out Bakes" value={String(soldOutCount)} detail="Currently at zero" icon={CircleX} tone="via-[#F4511E]" />
         </section>
 
-        <section aria-label="Inventory filters" className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3 no-scrollbar">
+        <section aria-label="Inventory filters" className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[#FF6D00]/15 bg-[#14161B]/80 p-3">
           <Button
             type="button"
             onClick={() => setSelectedCategory('all')}

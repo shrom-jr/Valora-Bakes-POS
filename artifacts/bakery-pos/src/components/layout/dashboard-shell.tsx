@@ -76,7 +76,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <MenuIcon className="h-5 w-5" />
           </Button>
         </div>
-        <main className="dashboard-scrollbar h-[calc(100vh-4rem)] min-h-0 w-full flex-1 overflow-y-auto overscroll-y-auto p-6 space-y-8 [touch-action:pan-y] lg:p-8">
+        <main className="h-[calc(100vh-4rem)] min-h-0 w-full flex-1 overflow-y-auto overscroll-y-auto p-6 space-y-8 [touch-action:pan-y] lg:p-8">
           {children}
         </main>
       </div>

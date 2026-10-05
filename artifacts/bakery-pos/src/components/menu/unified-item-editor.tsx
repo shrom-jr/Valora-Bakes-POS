@@ -266,7 +266,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-[#14161B] border-[#FF6D00]/20 text-white sm:max-w-[500px] max-h-[90vh] overflow-y-auto no-scrollbar">
+      <DialogContent className="bg-[#14161B] border-[#FF6D00]/20 text-white sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{existingItem ? 'Edit Item' : 'New Menu Item'}</DialogTitle>
         </DialogHeader>

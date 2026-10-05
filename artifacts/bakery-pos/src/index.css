@@ -14,6 +14,31 @@ input[type='number'] {
   appearance: textfield;
 }
 
+/* Sleek minimalist dark scrollbar globally */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0e12;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) #0d0e12;
+}
+
 .brand-business-name {
   font-family: 'Baloo 2', 'Plus Jakarta Sans', sans-serif;
   font-weight: 800;
@@ -26,26 +51,6 @@ input[type='number'] {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-}
-
-.dashboard-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 109, 0, 0.7) rgba(20, 22, 27, 0.9);
-  touch-action: pan-y;
-}
-
-.dashboard-scrollbar::-webkit-scrollbar {
-  width: 10px;
-}
-
-.dashboard-scrollbar::-webkit-scrollbar-track {
-  background: rgba(20, 22, 27, 0.9);
-}
-
-.dashboard-scrollbar::-webkit-scrollbar-thumb {
-  border: 3px solid rgba(20, 22, 27, 0.9);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffd54f, #ff6d00, #f4511e);
 }
 
 .thermal-receipt-print {
@@ -487,14 +492,6 @@ input[type='number'] {
  * need to be distinguished from eachother visually.
  */
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
   /* Hide ugly search cancel button in Chrome until we can style it properly */
   input[type='search']::-webkit-search-cancel-button {
     @apply hidden;
