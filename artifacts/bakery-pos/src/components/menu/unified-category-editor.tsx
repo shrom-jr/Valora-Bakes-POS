@@ -58,7 +58,7 @@ export default function UnifiedCategoryEditor({ isOpen, onClose, existingCategor
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-[#14161B] border-[#FF6D00]/20 text-white sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{existingCategory ? 'Edit Category' : 'New Category'}</DialogTitle>
+          <DialogTitle>{existingCategory ? 'Rename Category' : 'New Category'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -71,7 +71,7 @@ export default function UnifiedCategoryEditor({ isOpen, onClose, existingCategor
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={isSaving} className="text-[#94A3B8] hover:text-white">Cancel</Button>
+          <Button variant="ghost" onClick={onClose} disabled={isSaving} className="text-slate-200 hover:text-white">Cancel</Button>
           <Button onClick={handleSave} disabled={isSaving} className="bg-gradient-to-r from-[#FFB300] to-[#F4511E] text-white">
             {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Save Changes

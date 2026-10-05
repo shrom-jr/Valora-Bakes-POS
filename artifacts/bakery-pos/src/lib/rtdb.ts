@@ -204,6 +204,7 @@ export async function createCategory(data: Omit<Category, 'id' | 'createdAt' | '
   if (!database) throw new Error('Database not initialized');
   const catRef = ref(database, 'categories');
   const newRef = push(catRef);
+  if (!newRef.key) throw new Error('Could not generate a category ID');
   const now = Date.now();
   
   const updates: Record<string, any> = {};
@@ -213,6 +214,7 @@ export async function createCategory(data: Omit<Category, 'id' | 'createdAt' | '
     updatedAt: now,
   };
   await update(ref(database), updates);
+  return newRef.key;
 }
 
 export async function updateCategory(id: string, data: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>) {

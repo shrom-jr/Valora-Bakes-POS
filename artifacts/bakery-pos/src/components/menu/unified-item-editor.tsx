@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { createMenuItem, updateMenuItem, Category, MenuItem } from '@/lib/rtdb';
+import { createCategory, createMenuItem, updateMenuItem, Category, MenuItem } from '@/lib/rtdb';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 
 interface TierState {
@@ -27,12 +27,16 @@ interface Props {
 }
 
 const PRESETS = ['0.5', '1', '2', '3'];
+const ADD_NEW_CATEGORY_OPTION = '__add_new_category__';
 
 export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categories, defaultCategoryId }: Props) {
   const { toast } = useToast();
   
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [showCategoryInput, setShowCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [pricingMode, setPricingMode] = useState<'piece' | 'weight'>('piece');
   const [unitPrice, setUnitPrice] = useState('');
   const [trackStock, setTrackStock] = useState(true);
@@ -42,6 +46,9 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) return;
+    setShowCategoryInput(false);
+    setNewCategoryName('');
     if (existingItem) {
       setName(existingItem.name);
       setCategoryId(existingItem.categoryId);
@@ -67,14 +74,14 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
       }
     } else {
       setName('');
-       setCategoryId(defaultCategoryId || categories[0]?.id || '');
+      setCategoryId(defaultCategoryId || categories[0]?.id || '');
       setPricingMode('piece');
       setUnitPrice('');
       setTrackStock(true);
       setActive(true);
       setTiers([]);
     }
-  }, [existingItem?.id, categories, isOpen, defaultCategoryId]);
+  }, [existingItem?.id, isOpen]);
 
   const handleTogglePreset = (weight: string) => {
     const existing = tiers.find(t => t.weightLb === weight && !t.isCustom);
@@ -105,6 +112,32 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
 
   const handleTierChange = (id: string, field: keyof TierState, value: string) => {
     setTiers(tiers.map(t => t.id === id ? { ...t, [field]: value } : t));
+  };
+
+  const handleCreateCategoryInline = async () => {
+    const trimmedName = newCategoryName.trim();
+    if (!trimmedName) {
+      toast({ title: 'Validation', description: 'Category name is required', variant: 'destructive' });
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    try {
+      const maxSortOrder = categories.reduce((max, category) => Math.max(max, category.sortOrder), 0);
+      const newCategoryId = await createCategory({
+        name: trimmedName,
+        active: true,
+        sortOrder: maxSortOrder + 1,
+      });
+      setCategoryId(newCategoryId);
+      setNewCategoryName('');
+      setShowCategoryInput(false);
+      toast({ title: 'Category added', description: `${trimmedName} is selected for this item.` });
+    } catch (err: any) {
+      toast({ title: 'Category not added', description: err?.message || 'Could not create the category.', variant: 'destructive' });
+    } finally {
+      setIsCreatingCategory(false);
+    }
   };
 
   const handleSave = async () => {
@@ -246,7 +279,19 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
             </div>
             <div className="space-y-2">
               <Label className="text-[#E2E8F0]">Category</Label>
-              <Select value={categoryId} onValueChange={setCategoryId} disabled={isSaving}>
+              <Select
+                value={categoryId}
+                onValueChange={(value) => {
+                  if (value === ADD_NEW_CATEGORY_OPTION) {
+                    setNewCategoryName('');
+                    setShowCategoryInput(true);
+                  } else {
+                    setCategoryId(value);
+                    setShowCategoryInput(false);
+                  }
+                }}
+                disabled={isSaving || isCreatingCategory}
+              >
                 <SelectTrigger className="bg-[#0E0F12] border-[#FF6D00]/20 text-white">
                   <SelectValue placeholder="Select..." />
                 </SelectTrigger>
@@ -254,8 +299,54 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
+                  <SelectItem value={ADD_NEW_CATEGORY_OPTION} className="font-semibold text-[#FFD54F]">
+                    + Add New Category...
+                  </SelectItem>
                 </SelectContent>
               </Select>
+              {showCategoryInput && (
+                <div className="mt-2 space-y-2">
+                  <Input
+                    autoFocus
+                    aria-label="New category name"
+                    value={newCategoryName}
+                    onChange={(event) => setNewCategoryName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        void handleCreateCategoryInline();
+                      }
+                    }}
+                    disabled={isCreatingCategory || isSaving}
+                    placeholder="Enter category name"
+                    maxLength={48}
+                    className="h-9 bg-[#0E0F12] text-white placeholder:text-slate-400"
+                  />
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => void handleCreateCategoryInline()}
+                      disabled={isCreatingCategory || isSaving || !newCategoryName.trim()}
+                      className="h-8 bg-[#FF6D00] px-3 text-white hover:bg-[#F4511E]"
+                    >
+                      {isCreatingCategory && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                      Add
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCategoryInput(false);
+                        setNewCategoryName('');
+                      }}
+                      disabled={isCreatingCategory || isSaving}
+                      className="text-sm font-medium text-slate-200 underline-offset-4 hover:text-white hover:underline disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -264,14 +355,14 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
             <div className="flex bg-[#0E0F12] p-1 rounded-xl border border-[#FF6D00]/20">
               <button
                 type="button"
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${pricingMode === 'piece' ? 'bg-[#FF6D00]/20 text-[#FFB300]' : 'text-[#94A3B8] hover:text-white'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${pricingMode === 'piece' ? 'bg-[#FF6D00]/20 text-[#FFB300]' : 'text-slate-200 hover:text-white'}`}
                 onClick={() => !isSaving && setPricingMode('piece')}
               >
                 Per Piece
               </button>
               <button
                 type="button"
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${pricingMode === 'weight' ? 'bg-[#FF6D00]/20 text-[#FFB300]' : 'text-[#94A3B8] hover:text-white'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${pricingMode === 'weight' ? 'bg-[#FF6D00]/20 text-[#FFB300]' : 'text-slate-200 hover:text-white'}`}
                 onClick={() => !isSaving && setPricingMode('weight')}
               >
                 By Weight / Pound
@@ -294,12 +385,12 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
                   {PRESETS.map(w => {
                     const active = tiers.some(t => t.weightLb === w && !t.isCustom);
                     return (
-                      <button key={w} type="button" onClick={() => !isSaving && handleTogglePreset(w)} className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${active ? 'bg-[#FF6D00] text-white border-[#FF6D00]' : 'bg-[#14161B] text-[#94A3B8] border-[#2A2D35] hover:border-[#FF6D00]/50'}`}>
+                      <button key={w} type="button" onClick={() => !isSaving && handleTogglePreset(w)} className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${active ? 'bg-[#FF6D00] text-white border-[#FF6D00]' : 'bg-[#14161B] text-slate-200 border-[#2A2D35] hover:border-[#FF6D00]/50'}`}>
                         {w} lb
                       </button>
                     )
                   })}
-                  <button type="button" onClick={() => !isSaving && handleAddCustomTier()} className="px-3 py-1.5 rounded-full text-sm font-medium border bg-[#14161B] text-[#94A3B8] border-[#2A2D35] hover:border-[#FF6D00]/50 border-dashed">
+                  <button type="button" onClick={() => !isSaving && handleAddCustomTier()} className="px-3 py-1.5 rounded-full text-sm font-medium border bg-[#14161B] text-slate-200 border-[#2A2D35] hover:border-[#FF6D00]/50 border-dashed">
                     + Custom
                   </button>
                 </div>
@@ -323,7 +414,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
                       
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <Label className="text-[10px] text-[#94A3B8] uppercase">Price (NPR)</Label>
+                          <Label className="text-[10px] text-slate-200 uppercase">Price (NPR)</Label>
                           <Input type="number" value={t.price} onChange={e => handleTierChange(t.id, 'price', e.target.value)} disabled={isSaving} className="h-8 bg-[#0E0F12] text-sm font-mono border-[#2A2D35]" />
                         </div>
                         
@@ -343,7 +434,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
             <div className="flex items-center justify-between bg-[#0E0F12] p-3 rounded-xl border border-[#FF6D00]/10">
               <div>
                 <Label className="text-[#E2E8F0] block leading-tight">Track Inventory</Label>
-                <span className="text-[10px] text-[#94A3B8]">Disable for unlimited items</span>
+                <span className="text-[10px] text-slate-200">Disable for unlimited items</span>
               </div>
               <Switch checked={trackStock} onCheckedChange={setTrackStock} disabled={isSaving} />
             </div>
@@ -352,7 +443,7 @@ export default function UnifiedItemEditor({ isOpen, onClose, existingItem, categ
         </div>
 
         <DialogFooter className="mt-2">
-          <Button variant="ghost" onClick={onClose} className="text-[#94A3B8] hover:text-white" disabled={isSaving}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose} className="text-slate-200 hover:text-white" disabled={isSaving}>Cancel</Button>
           <Button onClick={handleSave} className="bg-gradient-to-r from-[#FFB300] to-[#F4511E] text-white border-none shadow-[0_0_15px_rgba(255,109,0,0.3)]" disabled={isSaving}>
             {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Save Changes
