@@ -44,33 +44,33 @@ function HighlightedText({ text, tokens }: { text: string; tokens: string[] }) {
 const registerTilePalettes = [
   {
     border: 'border-amber-500/40 hover:border-amber-500/80',
-    background: 'bg-gradient-to-b from-amber-500/10 via-[#14161B] to-[#14161B]',
-    glow: 'shadow-[0_2px_10px_rgba(245,158,11,0.12)] hover:shadow-[0_8px_24px_rgba(245,158,11,0.2)]',
+    background: 'bg-gradient-to-b from-amber-500/15 via-[#14161B] to-[#14161B]',
+    glow: 'hover:shadow-lg hover:shadow-amber-500/20',
   },
   {
     border: 'border-cyan-500/40 hover:border-cyan-500/80',
-    background: 'bg-gradient-to-b from-cyan-500/10 via-[#14161B] to-[#14161B]',
-    glow: 'shadow-[0_2px_10px_rgba(6,182,212,0.12)] hover:shadow-[0_8px_24px_rgba(6,182,212,0.2)]',
+    background: 'bg-gradient-to-b from-cyan-500/15 via-[#14161B] to-[#14161B]',
+    glow: 'hover:shadow-lg hover:shadow-cyan-500/20',
   },
   {
     border: 'border-emerald-500/40 hover:border-emerald-500/80',
-    background: 'bg-gradient-to-b from-emerald-500/10 via-[#14161B] to-[#14161B]',
-    glow: 'shadow-[0_2px_10px_rgba(16,185,129,0.12)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.2)]',
+    background: 'bg-gradient-to-b from-emerald-500/15 via-[#14161B] to-[#14161B]',
+    glow: 'hover:shadow-lg hover:shadow-emerald-500/20',
   },
   {
     border: 'border-rose-500/40 hover:border-rose-500/80',
-    background: 'bg-gradient-to-b from-rose-500/10 via-[#14161B] to-[#14161B]',
-    glow: 'shadow-[0_2px_10px_rgba(244,63,94,0.12)] hover:shadow-[0_8px_24px_rgba(244,63,94,0.2)]',
+    background: 'bg-gradient-to-b from-rose-500/15 via-[#14161B] to-[#14161B]',
+    glow: 'hover:shadow-lg hover:shadow-rose-500/20',
   },
   {
     border: 'border-purple-500/40 hover:border-purple-500/80',
-    background: 'bg-gradient-to-b from-purple-500/10 via-[#14161B] to-[#14161B]',
-    glow: 'shadow-[0_2px_10px_rgba(168,85,247,0.12)] hover:shadow-[0_8px_24px_rgba(168,85,247,0.2)]',
+    background: 'bg-gradient-to-b from-purple-500/15 via-[#14161B] to-[#14161B]',
+    glow: 'hover:shadow-lg hover:shadow-purple-500/20',
   },
   {
     border: 'border-orange-500/40 hover:border-orange-500/80',
-    background: 'bg-gradient-to-b from-orange-500/10 via-[#14161B] to-[#14161B]',
-    glow: 'shadow-[0_2px_10px_rgba(249,115,22,0.12)] hover:shadow-[0_8px_24px_rgba(249,115,22,0.2)]',
+    background: 'bg-gradient-to-b from-orange-500/15 via-[#14161B] to-[#14161B]',
+    glow: 'hover:shadow-lg hover:shadow-orange-500/20',
   },
 ] as const;
 
@@ -472,20 +472,20 @@ export default function Dashboard() {
                     key={cartItemId}
                     disabled={isOutOfStock}
                     onClick={() => handleTileClick(item, tierId, tier)}
-                    className={`relative h-[140px] overflow-hidden rounded-2xl border p-[1px] text-left transition-all ${palette.border} ${palette.background} ${palette.glow} ${
-                      isOutOfStock ? 'cursor-not-allowed opacity-60' : 'cursor-pointer active:scale-[0.98]'
+                    className={`relative h-[140px] overflow-hidden rounded-2xl border p-[1px] text-left transition-all duration-200 ease-out hover:-translate-y-1 ${palette.border} ${palette.background} ${palette.glow} ${
+                      isOutOfStock ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                     }`}
                   >
-                    <div className="bg-[#14161B] rounded-[15px] h-full flex flex-col justify-between p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <div className="flex h-full flex-col rounded-[15px] bg-[#14161B] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                       <div className="min-w-0 pr-8">
-                        <div className="font-bold leading-tight text-white">
+                        <div className="line-clamp-1 text-base font-bold leading-tight text-white">
                           <HighlightedText text={item.name} tokens={searchTokens} />
                         </div>
-                        <div className="mt-1 text-xs font-medium text-slate-200">{unitLabel}</div>
                       </div>
-                      <div>
-                        <div className="mb-2 font-mono text-lg font-bold text-white">NPR {unitPrice.toFixed(2)}</div>
-                        <div className={`inline-block px-2 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold ${stockClass}`}>
+                      <div className="mt-auto">
+                        <div className="mt-3 font-mono text-xl font-extrabold text-white">NPR {unitPrice.toFixed(2)}</div>
+                        <div className="mt-0.5 text-xs font-medium text-slate-300">{unitLabel}</div>
+                        <div className={`mt-2 inline-block rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${stockClass}`}>
                           {stockStatus}
                         </div>
                       </div>
