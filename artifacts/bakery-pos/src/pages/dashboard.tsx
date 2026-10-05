@@ -44,38 +44,38 @@ function HighlightedText({ text, tokens }: { text: string; tokens: string[] }) {
 const registerTilePalettes = [
   {
     border: 'border-amber-500/40 hover:border-amber-500/80',
-    background: 'bg-gradient-to-b from-amber-500/15 via-[#14161B] to-[#14161B]',
-    glow: 'hover:shadow-lg hover:shadow-amber-500/20',
+    background: 'bg-gradient-to-b from-amber-500/25 via-[#161820] to-[#12141A]',
+    glow: 'hover:shadow-lg hover:shadow-amber-500/25',
   },
   {
     border: 'border-cyan-500/40 hover:border-cyan-500/80',
-    background: 'bg-gradient-to-b from-cyan-500/15 via-[#14161B] to-[#14161B]',
-    glow: 'hover:shadow-lg hover:shadow-cyan-500/20',
+    background: 'bg-gradient-to-b from-cyan-500/25 via-[#161820] to-[#12141A]',
+    glow: 'hover:shadow-lg hover:shadow-cyan-500/25',
   },
   {
     border: 'border-emerald-500/40 hover:border-emerald-500/80',
-    background: 'bg-gradient-to-b from-emerald-500/15 via-[#14161B] to-[#14161B]',
-    glow: 'hover:shadow-lg hover:shadow-emerald-500/20',
+    background: 'bg-gradient-to-b from-emerald-500/25 via-[#161820] to-[#12141A]',
+    glow: 'hover:shadow-lg hover:shadow-emerald-500/25',
   },
   {
     border: 'border-rose-500/40 hover:border-rose-500/80',
-    background: 'bg-gradient-to-b from-rose-500/15 via-[#14161B] to-[#14161B]',
-    glow: 'hover:shadow-lg hover:shadow-rose-500/20',
+    background: 'bg-gradient-to-b from-rose-500/25 via-[#161820] to-[#12141A]',
+    glow: 'hover:shadow-lg hover:shadow-rose-500/25',
   },
   {
     border: 'border-purple-500/40 hover:border-purple-500/80',
-    background: 'bg-gradient-to-b from-purple-500/15 via-[#14161B] to-[#14161B]',
-    glow: 'hover:shadow-lg hover:shadow-purple-500/20',
+    background: 'bg-gradient-to-b from-purple-500/25 via-[#161820] to-[#12141A]',
+    glow: 'hover:shadow-lg hover:shadow-purple-500/25',
   },
   {
     border: 'border-orange-500/40 hover:border-orange-500/80',
-    background: 'bg-gradient-to-b from-orange-500/15 via-[#14161B] to-[#14161B]',
-    glow: 'hover:shadow-lg hover:shadow-orange-500/20',
+    background: 'bg-gradient-to-b from-orange-500/25 via-[#161820] to-[#12141A]',
+    glow: 'hover:shadow-lg hover:shadow-orange-500/25',
   },
 ] as const;
 
 function getRegisterUnitLabel(isPiece: boolean, tier: MenuItemTier | null) {
-  if (isPiece) return 'Per piece';
+  if (isPiece) return '(per piece)';
   if (tier?.weightLb !== null && tier?.weightLb !== undefined) {
     return `${tier.weightLb.toLocaleString('en-US', { maximumFractionDigits: 2 })} lb (Pound)`;
   }
@@ -437,7 +437,7 @@ export default function Dashboard() {
 
           {/* Grid */}
           <div className="flex-1 overflow-y-auto p-4 z-10 relative">
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-24">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,220px))] gap-3.5 pb-24">
               {menuCards.length === 0 ? (
                 <div className="col-span-full rounded-2xl border border-white/10 bg-[#14161B]/70 px-5 py-10 text-center text-sm text-[#94A3B8]">
                   {searchTokens.length > 0 ? 'No menu items match your search.' : 'No products are available in this category.'}
@@ -472,18 +472,19 @@ export default function Dashboard() {
                     key={cartItemId}
                     disabled={isOutOfStock}
                     onClick={() => handleTileClick(item, tierId, tier)}
-                    className={`relative h-[140px] overflow-hidden rounded-2xl border p-[1px] text-left transition-all duration-200 ease-out hover:-translate-y-1 ${palette.border} ${palette.background} ${palette.glow} ${
+                    className={`relative h-[160px] overflow-hidden rounded-2xl border p-[1px] text-left transition-all duration-200 ease-out hover:-translate-y-1 ${palette.border} ${palette.background} ${palette.glow} ${
                       isOutOfStock ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                     }`}
                   >
-                    <div className="flex h-full flex-col rounded-[15px] bg-[#14161B] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <div className="flex h-full flex-col rounded-[15px] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                       <div className="min-w-0 pr-8">
                         <div className="line-clamp-1 text-base font-bold leading-tight text-white">
                           <HighlightedText text={item.name} tokens={searchTokens} />
                         </div>
                       </div>
+                      <div className="w-full border-b border-white/10 my-2.5" />
                       <div className="mt-auto">
-                        <div className="mt-3 font-mono text-xl font-extrabold text-white">NPR {unitPrice.toFixed(2)}</div>
+                        <div className="font-mono text-xl font-extrabold text-white">NPR {unitPrice.toFixed(2)}</div>
                         <div className="mt-0.5 text-xs font-medium text-slate-300">{unitLabel}</div>
                         <div className={`mt-2 inline-block rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${stockClass}`}>
                           {stockStatus}
