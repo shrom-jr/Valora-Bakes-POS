@@ -297,11 +297,12 @@ export default function SettingsPage() {
                       disabled={vatSaving}
                       onCheckedChange={setVatEnabledDraft}
                       aria-label="Enable VAT"
+                      className="h-6 w-11 border border-white/20 data-[state=checked]:bg-[#FF6D00] data-[state=unchecked]:bg-[#424650] focus-visible:ring-amber-400 focus-visible:ring-offset-[#0E0F12]"
                     />
                   </div>
                   {vatEnabledDraft && (
                     <div className="mt-4 max-w-xs">
-                      <label htmlFor="vat-rate" className="mb-2 block text-xs font-semibold text-slate-200">VAT Rate (%)</label>
+                      <label htmlFor="vat-rate" className="mb-2 block text-xs font-semibold text-slate-200">VAT Percentage (%)</label>
                       <Input
                         id="vat-rate"
                         type="number"
@@ -309,9 +310,11 @@ export default function SettingsPage() {
                         max="100"
                         step="0.1"
                         value={vatRateDraft}
+                        placeholder="13"
+                        inputMode="decimal"
                         disabled={vatSaving}
                         onChange={(event) => setVatRateDraft(event.target.value)}
-                        className="border-[#2A2D35] bg-[#14161B] text-white"
+                        className="h-11 w-32 rounded-xl border-white/20 bg-[#161820] px-3 py-2 text-white focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500/40"
                       />
                     </div>
                   )}
