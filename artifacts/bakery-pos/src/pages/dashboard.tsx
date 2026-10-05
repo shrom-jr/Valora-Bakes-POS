@@ -43,34 +43,34 @@ function HighlightedText({ text, tokens }: { text: string; tokens: string[] }) {
 
 const registerTilePalettes = [
   {
-    border: 'border-amber-500/40 hover:border-amber-500/80',
-    background: 'bg-gradient-to-b from-amber-500/25 via-[#161820] to-[#12141A]',
-    glow: 'hover:shadow-lg hover:shadow-amber-500/25',
+    border: 'border-amber-500/30 hover:border-amber-500/70',
+    background: 'bg-gradient-to-b from-amber-500/[0.07] via-[#14161C] to-[#121418]',
+    glow: 'hover:shadow-lg hover:shadow-amber-500/10',
   },
   {
-    border: 'border-cyan-500/40 hover:border-cyan-500/80',
-    background: 'bg-gradient-to-b from-cyan-500/25 via-[#161820] to-[#12141A]',
-    glow: 'hover:shadow-lg hover:shadow-cyan-500/25',
+    border: 'border-cyan-500/30 hover:border-cyan-500/70',
+    background: 'bg-gradient-to-b from-cyan-500/[0.07] via-[#14161C] to-[#121418]',
+    glow: 'hover:shadow-lg hover:shadow-cyan-500/10',
   },
   {
-    border: 'border-emerald-500/40 hover:border-emerald-500/80',
-    background: 'bg-gradient-to-b from-emerald-500/25 via-[#161820] to-[#12141A]',
-    glow: 'hover:shadow-lg hover:shadow-emerald-500/25',
+    border: 'border-emerald-500/30 hover:border-emerald-500/70',
+    background: 'bg-gradient-to-b from-emerald-500/[0.07] via-[#14161C] to-[#121418]',
+    glow: 'hover:shadow-lg hover:shadow-emerald-500/10',
   },
   {
-    border: 'border-rose-500/40 hover:border-rose-500/80',
-    background: 'bg-gradient-to-b from-rose-500/25 via-[#161820] to-[#12141A]',
-    glow: 'hover:shadow-lg hover:shadow-rose-500/25',
+    border: 'border-rose-500/30 hover:border-rose-500/70',
+    background: 'bg-gradient-to-b from-rose-500/[0.07] via-[#14161C] to-[#121418]',
+    glow: 'hover:shadow-lg hover:shadow-rose-500/10',
   },
   {
-    border: 'border-purple-500/40 hover:border-purple-500/80',
-    background: 'bg-gradient-to-b from-purple-500/25 via-[#161820] to-[#12141A]',
-    glow: 'hover:shadow-lg hover:shadow-purple-500/25',
+    border: 'border-purple-500/30 hover:border-purple-500/70',
+    background: 'bg-gradient-to-b from-purple-500/[0.07] via-[#14161C] to-[#121418]',
+    glow: 'hover:shadow-lg hover:shadow-purple-500/10',
   },
   {
-    border: 'border-orange-500/40 hover:border-orange-500/80',
-    background: 'bg-gradient-to-b from-orange-500/25 via-[#161820] to-[#12141A]',
-    glow: 'hover:shadow-lg hover:shadow-orange-500/25',
+    border: 'border-orange-500/30 hover:border-orange-500/70',
+    background: 'bg-gradient-to-b from-orange-500/[0.07] via-[#14161C] to-[#121418]',
+    glow: 'hover:shadow-lg hover:shadow-orange-500/10',
   },
 ] as const;
 
